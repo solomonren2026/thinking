@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>职业探索分析模型 · 输入职业，看清全貌</title>
+<style>
+:root{
+  --bg:#F5F8FD; --card:#FFFFFF; --ink:#1F2A44; --muted:#6B7A99; --line:#E7EDF6;
+  --blue:#3B82F6; --orange:#F97316; --purple:#8B5CF6; --pink:#EC4899;
+  --teal:#14B8A6; --amber:#E9A23B; --red:#E8593F; --green:#22A06B;
+  --shadow:0 8px 28px rgba(31,52,90,.07); --shadow2:0 2px 10px rgba(31,52,90,.05);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,-apple-system,sans-serif;
+  line-height:1.72;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+button,input{font-family:inherit}
+button{cursor:pointer}
+
+/* ---------- 背景装饰 ---------- */
+.decor{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.decor i{position:absolute;display:block;border-radius:50%;opacity:.5}
+.d1{width:420px;height:420px;left:-160px;top:-170px;background:radial-gradient(circle,#FFE7CF,#FFF6EC 70%,transparent 71%)}
+.d2{width:360px;height:360px;right:-140px;top:-120px;background:radial-gradient(circle,#DCEBFF,#F0F6FF 70%,transparent 71%)}
+.d3{width:260px;height:260px;right:-90px;bottom:40px;background:radial-gradient(circle,#DFF5EC,#F0FBF6 70%,transparent 71%)}
+.sun{position:absolute;right:12%;top:118px;width:74px;height:74px;border-radius:50%;
+  background:linear-gradient(145deg,#FFD98A,#FFB74D);opacity:.28}
+.cloud{position:absolute;left:8%;top:210px;width:120px;height:34px;border-radius:34px;background:#fff;opacity:.45;
+  box-shadow:38px -14px 0 -6px #fff,70px 2px 0 -4px #fff}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;z-index:1;padding:54px 0 30px;text-align:center}
+.brand{display:inline-flex;align-items:center;gap:9px;font-size:13px;letter-spacing:.08em;color:var(--blue);
+  background:#EAF2FF;border:1px solid #D8E7FF;padding:6px 15px;border-radius:100px;font-weight:600}
+.brand b{width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block}
+.hero h1{font-size:clamp(30px,4.6vw,46px);line-height:1.28;margin:22px 0 12px;font-weight:800;letter-spacing:-.5px}
+.hero h1 em{font-style:normal;background:linear-gradient(100deg,#3B82F6,#14B8A6);-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:15px;margin:0 0 30px}
+.search{position:relative;max-width:660px;margin:0 auto;display:flex;gap:10px;background:#fff;
+  padding:9px 9px 9px 20px;border-radius:16px;box-shadow:0 12px 36px rgba(45,80,150,.13);border:1px solid var(--line)}
+.search input{flex:1;border:0;outline:0;font-size:16px;color:var(--ink);background:transparent;min-width:0}
+.search input::placeholder{color:#A6B2C8}
+.search button{border:0;border-radius:11px;padding:0 26px;font-size:15px;font-weight:700;color:#fff;
+  background:linear-gradient(120deg,#3B82F6,#5B8DEF);box-shadow:0 5px 14px rgba(59,130,246,.28);white-space:nowrap}
+.search button:hover{filter:brightness(1.06)}
+.suggest{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow);text-align:left;max-height:290px;overflow:auto;z-index:20;display:none}
+.suggest.on{display:block}
+.suggest div{padding:10px 18px;cursor:pointer;font-size:14px;display:flex;justify-content:space-between;gap:10px}
+.suggest div:hover{background:#F3F7FF}
+.suggest small{color:var(--muted)}
+.hot{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.hot span{font-size:13px;color:var(--muted);margin-right:2px}
+.hot button{border:1px solid var(--line);background:#fff;color:#46577A;border-radius:100px;padding:6px 14px;font-size:13px;transition:.18s}
+.hot button:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-2px);box-shadow:var(--shadow2)}
+
+/* ---------- 模型说明 ---------- */
+.intro{position:relative;z-index:1;margin:34px 0 44px;background:rgba(255,255,255,.72);border:1px solid var(--line);
+  border-radius:20px;padding:26px 28px;box-shadow:var(--shadow2)}
+.intro h2{font-size:17px;margin:0 0 6px}
+.intro p{font-size:13.5px;color:var(--muted);margin:0 0 20px}
+.dims{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dim{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.dim b{flex:none;width:24px;height:24px;border-radius:8px;color:#fff;font-size:12px;display:grid;place-items:center}
+.dim span{font-size:13px;font-weight:600;line-height:1.5}
+.dim small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+
+/* ---------- 报告 ---------- */
+.report{position:relative;z-index:1;padding-bottom:60px}
+.rhead{background:linear-gradient(125deg,#FFF9F1,#F1F7FF 55%,#F0FBF7);border:1px solid var(--line);
+  border-radius:22px;padding:30px 32px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr 260px;gap:24px}
+.rhead h2{font-size:34px;margin:6px 0 10px;font-weight:800;letter-spacing:-.5px}
+.tagrow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tag{font-size:12.5px;padding:4px 12px;border-radius:100px;background:#fff;border:1px solid var(--line);color:#46577A}
+.tag.hi{background:#EAF2FF;border-color:#D3E4FF;color:#2563EB;font-weight:600}
+.tag.warn{background:#FFF3E6;border-color:#FFE0BF;color:#C2650C;font-weight:600}
+.rdef{font-size:15.5px;font-weight:600;margin:0 0 8px}
+.rdesc{font-size:14px;color:#54658A;margin:0;line-height:1.85}
+.radar{background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px 8px 4px;align-self:center}
+.radar .cap{text-align:center;font-size:12px;color:var(--muted);margin-bottom:-6px}
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow2)}
+.stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
+.stat b{font-size:15px;line-height:1.45;display:block}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:18px 0 6px}
+.tb{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 15px;font-size:13px;color:#46577A;transition:.18s}
+.tb:hover{border-color:var(--blue);color:var(--blue)}
+.tb.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tb.pri:hover{background:#33436A;color:#fff}
+.tb.active{background:#EAF2FF;border-color:#B9D3FF;color:#2563EB;font-weight:600}
+.tbsp{flex:1}
+.hint{font-size:12.5px;color:var(--muted)}
+
+.nav{display:flex;gap:6px;overflow-x:auto;padding:10px 2px;margin:8px 0 18px;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{white-space:nowrap;font-size:12.5px;text-decoration:none;color:#5A6B8E;background:#fff;
+  border:1px solid var(--line);border-radius:100px;padding:6px 13px}
+.nav a:hover{color:var(--blue);border-color:#B9D3FF}
+
+.sec{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 28px;
+  box-shadow:var(--shadow);margin-bottom:16px;scroll-margin-top:16px}
+.sech{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.num{width:32px;height:32px;flex:none;border-radius:10px;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.sech h3{font-size:19px;margin:0;font-weight:750}
+.sech .en{margin-left:auto;font-size:11px;letter-spacing:.12em;color:#B2BFD4;text-transform:uppercase}
+.lead{font-size:13.5px;color:var(--muted);margin:0 0 20px}
+
+/* 列表 */
+.items{display:grid;gap:10px}
+.item{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:#FCFEFF}
+.item .t{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:650}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.item .d{font-size:13px;color:#64748B;margin:4px 0 0 16px;line-height:1.7}
+.lvl{margin-left:auto;display:flex;gap:3px;flex:none}
+.lvl i{width:6px;height:6px;border-radius:50%;background:#E3EAF5;display:block}
+.lvl i.on{background:currentColor}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.daily{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px}
+.daily div{display:flex;gap:10px;align-items:flex-start;background:#F7FAFF;border-radius:11px;padding:12px 14px;font-size:13.5px}
+.daily b{color:var(--blue);font-size:12px;flex:none;background:#E6F0FF;width:20px;height:20px;border-radius:6px;display:grid;place-items:center}
+
+/* 学科条 */
+.subj{display:grid;gap:11px}
+.srow{display:grid;grid-template-columns:112px 1fr 40px;gap:12px;align-items:center}
+.sname{font-size:13.5px;font-weight:650;text-align:right}
+.sbar{height:12px;border-radius:100px;background:#EEF2F8;overflow:hidden}
+.sbar i{display:block;height:100%;border-radius:100px;background:linear-gradient(90deg,#5B9BFF,#22C55E)}
+.sval{font-size:12px;color:var(--muted)}
+.sreason{grid-column:2/4;font-size:12.5px;color:#6B7A99;line-height:1.6;margin-top:-2px}
+.path{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:22px}
+.pcard{border-radius:13px;padding:15px 16px;border:1px solid var(--line);background:linear-gradient(160deg,#fff,#F8FBFF)}
+.pcard .k{font-size:11.5px;letter-spacing:.06em;font-weight:700;color:var(--blue);margin-bottom:6px}
+.pcard .v{font-size:13px;color:#4C5D7E;line-height:1.75}
+.majors{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.majors b{font-size:12.5px;color:var(--muted);font-weight:500;align-self:center;margin-right:4px}
+.majors span{font-size:12.5px;background:#EAF7F1;color:#167A52;border:1px solid #D3EFE1;border-radius:8px;padding:4px 11px}
+
+/* 时间轴 */
+.tl{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;margin-top:12px}
+.tl:before{content:"";position:absolute;left:6%;right:6%;top:15px;height:3px;background:linear-gradient(90deg,#BFD8FF,#8BD8C0,#FFD79A,#FFC7B4);border-radius:3px}
+.tstep{position:relative;padding:0 12px;text-align:center}
+.tstep .bead{width:32px;height:32px;margin:0 auto 16px;border-radius:50%;background:#fff;border:3px solid var(--blue);
+  display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--blue);position:relative}
+.tstep:nth-child(2) .bead{border-color:var(--teal);color:var(--teal)}
+.tstep:nth-child(3) .bead{border-color:var(--amber);color:var(--amber)}
+.tstep:nth-child(4) .bead{border-color:var(--red);color:var(--red)}
+.tstep .yr{font-size:12px;font-weight:700;color:#8A99B4;margin-bottom:6px}
+.tstep .st{font-size:14.5px;font-weight:700;margin-bottom:7px}
+.tstep .fo{font-size:12.5px;color:#64748B;line-height:1.65;text-align:left;background:#F8FAFE;border-radius:10px;padding:10px 11px}
+.tstep .ms{font-size:12px;color:var(--green);margin-top:8px;text-align:left;line-height:1.55}
+.spannote{margin-top:18px;background:#FFF8EC;border:1px solid #FFE9C7;border-radius:12px;padding:12px 16px;font-size:13px;color:#8A6420}
+
+/* 收入 */
+.incnote{margin-top:14px;font-size:12.5px;color:#8A7A6A;background:#FFFBF5;border:1px dashed #F0DFC6;border-radius:11px;padding:11px 14px}
+.inctip{font-size:12.5px;color:var(--muted);margin:-6px 0 14px}
+
+/* 推断提示 & 相似推荐 */
+.infer{background:#FFF8EC;border:1px solid #FFE1B2;border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:13.5px;color:#8A6420}
+.similar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.similar button{border:1px solid #F0D5A8;background:#fff;color:#A56A16;border-radius:100px;padding:5px 13px;font-size:12.5px}
+.similar button:hover{background:#FFF3DE}
+
+/* 对比 */
+.cmp{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 28px;box-shadow:var(--shadow);margin-bottom:16px}
+.cmp h3{font-size:18px;margin:0 0 4px}
+.cmp table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
+.cmp th,.cmp td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cmp th{background:#F7FAFF;font-weight:700;color:#3B4A68}
+.cmp td:first-child{color:var(--muted);width:130px}
+.cmp tr:last-child td{border-bottom:0}
+
+footer{position:relative;z-index:1;text-align:center;color:#9AA8BF;font-size:12px;padding:0 0 40px;line-height:1.9}
+footer b{color:#6B7A99;font-weight:600}
+
+@media(max-width:820px){
+  .rhead{grid-template-columns:1fr}.radar{max-width:340px;margin:0 auto;width:100%}
+  .dims{grid-template-columns:repeat(2,1fr)}.statrow{grid-template-columns:repeat(2,1fr)}
+  .tl{grid-template-columns:1fr 1fr;gap:18px 0}.tl:before{display:none}
+  .two,.daily,.path{grid-template-columns:1fr}
+  .hero{padding-top:34px}.sec{padding:20px 18px}.rhead{padding:24px 20px}
+}
+@media(max-width:520px){
+  .dims,.statrow,.tl{grid-template-columns:1fr}
+  .search{flex-direction:column;padding:12px}.search button{padding:11px}
+  .srow{grid-template-columns:84px 1fr 30px}.hero h1{font-size:29px}
+}
+@media print{
+  body{background:#fff}.decor,.hero,.intro,.toolbar,.nav,.hot,.similar,.cmp,footer{display:none!important}
+  .report{padding:0}.sec,.rhead{box-shadow:none;break-inside:avoid;page-break-inside:avoid;border-color:#DDD}
+  .wrap{max-width:100%;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="decor"><i class="d1"></i><i class="d2"></i><i class="d3"></i><div class="sun"></div><div class="cloud"></div></div>
+
+<header class="hero">
+ <div class="wrap">
+  <div class="brand"><b></b> CAREER LENS · 职业探索分析模型 <span style="color:#8FA6C8">v1.0</span></div>
+  <h1>输入一个职业，<em>看清它的全貌</em></h1>
+  <p class="sub">从专业技能到学业投入，生成一份可以带走的职业地图 · 无需登录、无需联网</p>
+  <div class="search">
+    <input id="q" placeholder="试试输入：软件工程师 / 医生 / 建筑师 / 律师 / 动画师…" autocomplete="off" spellcheck="false">
+    <button id="go">生成分析 →</button>
+    <div class="suggest" id="suggest"></div>
+  </div>
+  <div class="hot" id="hot"></div>
+ </div>
+</header>
+
+<main class="wrap">
+ <section class="intro" id="intro">
+  <h2>这个模型分析什么</h2>
+  <p>输入职业名称后，模型先匹配精确职业库；若未收录，则按「职业族特征模型」推断，并明确标注推断结果。收入、周期均为参考区间，请与实际招聘信息和从业者访谈交叉验证。</p>
+  <div class="dims" id="dims"></div>
+ </section>
+
+ <div id="out"></div>
+</main>
+
+<footer>
+ <b>职业探索分析模型 v1.0</b> · 内置 34 个职业深度档案 + 11 类职业族推断引擎<br>
+ 收入为税前年薪参考区间（人民币，一线城市中位偏上样本），受城市、行业周期、平台与个人能力影响显著，不构成薪酬承诺或官方统计。<br>
+ 学业建议基于中国高中选科与本科专业目录的一般路径，具体请以当年招生政策为准。
+</footer>
+
+<script>
+/* =====================================================================
+   一、职业族特征模型（GROUPS）—— 推断引擎的底层知识
+   ===================================================================== */
+const GROUPS = {
+ it:{
+  name:'信息技术与数字工程族', industry:'信息技术 / 互联网 / 软件服务',
+  chain:'产业链中游 · 技术研发与数字化服务', color:'#3B82F6',
+  keywords:['程序','开发','软件','代码','算法','数据','网络','网络安全','信息安全','渗透','漏洞','运维','测试','产品','互联网','前端','后端','人工智能','ai','aigc','大模型','机器','云','区块链','游戏','架构','数据库','信息技术','数字化'],
+  base:'以计算、数据与工程方法解决问题，产出可运行的系统、模型或数字产品，工作成果高度可复用、可规模化。',
+  skills:[['编程与工程实现',5,'把需求落成可运行、可维护、可测试的代码'],['数据结构与算法',5,'判断复杂度并选择合适的结构与算法'],['系统设计与架构',4,'分层、模块化、高并发、存储与缓存选型'],['协作工程化',4,'版本管理、代码评审、自动化测试与持续交付']],
+  knowledge:[['计算机基础','操作系统、组成原理、网络协议共同约束程序行为'],['数据库与数据建模','索引、事务、一致性与数据组织方式'],['软件工程方法论','需求管理、测试、重构与项目协作'],['业务领域知识','技术服务于业务，需理解所处行业的规则与合规']],
+  qualities:[['逻辑与抽象',5,'把模糊问题拆成清晰结构与可执行步骤'],['持续自学',5,'主流技术栈约 3–5 年更替一轮'],['细致与耐心',4,'边界条件与并发缺陷藏在细节里'],['协作与表达',4,'方案、文档与评审决定能否放大个人产出']],
+  subjects:[['数学',5,'离散数学、逻辑与建模是算法与抽象能力的底座'],['英语',4,'官方文档、论文、开源社区以英文为主'],['计算机 / 信息技术',5,'尽早建立计算思维与动手实践'],['物理',3,'帮助理解硬件、电路与系统底层'],['语文 / 表达',3,'写清文档与方案，是走向技术负责人的分水岭']],
+  path:{hs:'优先选物理；信息学竞赛、编程社团、个人小项目比单纯刷题更能建立优势',uni:'计算机类 / 软件工程 / 自动化 / 人工智能；务必吃透数据结构、操作系统、数据库三门核心课',adv:'实习与开源贡献重于证书；可参加 ACM、天梯赛、数学建模等竞赛',life:'每 2–3 年更新一次技术栈，中期向架构、管理或垂直领域专家分化'},
+  majors:['计算机科学与技术','软件工程','人工智能','数据科学与大数据技术'],
+  outlook:'总量大但结构分化：通用业务开发竞争加剧，AI 工程、基础软件、安全与云原生方向缺口持续。',
+  income:{entry:[10,20],growth:[20,40],mature:[40,80],top:80,note:'一线城市头部企业与技术稀缺方向溢价明显；二三线城市约为 60–75%'},
+  stages:[['入门期','0–3 年','在指导下完成模块任务，补齐工程规范','能独立交付一个完整功能模块'],['成长期','3–8 年','承担子系统设计与技术选型，开始带新人','主导中型项目并形成技术判断力'],['成熟期','8–15 年','负责架构、质量体系与跨团队协同','主导核心系统或技术路线'],['引领 / 转型期','15 年以上','技术战略、团队管理，或转向架构师、产品、创业','成为技术负责人或领域专家']],
+  radar:[90,84,70,78,76,95], threshold:'本科为主，项目经历与实习质量对首份工作影响很大', span:'约 30–35 年，技术岗通常在 35 岁前后出现明显分化'
+ },
+ medical:{
+  name:'医疗健康与生命科学族', industry:'医疗健康 / 卫生与生物医药',
+  chain:'产业链下游 · 直接面向患者的专业服务', color:'#EF4444',
+  keywords:['医','护','药','临床','牙','心理','康复','检验','影像','麻醉','公共卫生','营养','兽医','护理','手术','治疗','健康'],
+  base:'以生命科学与临床证据为依据，承担诊断、治疗、照护或康复，职业行为受严格资质准入与伦理规范约束。',
+  skills:[['临床评估与操作',5,'按规范采集信息、判断病情并完成标准操作'],['循证决策',5,'依据指南与证据而非经验直觉做判断'],['应急处置',4,'在信息不全、时间紧迫时保持稳定处置'],['病历与规范记录',4,'完整、准确、可追溯的文书是法律与质量要求']],
+  knowledge:[['基础医学','解剖、生理、病理、药理构成判断底座'],['临床医学 / 专科知识','诊断标准、诊疗指南与禁忌证'],['法律法规与伦理','执业规范、知情同意、隐私与医疗纠纷'],['公共卫生与统计','人群视角、流行病学与证据分级']],
+  qualities:[['责任与严谨',5,'差错代价高，流程不可省略'],['共情与沟通',5,'向患者与家属解释风险、方案与坏消息'],['情绪稳定与抗压',5,'长期轮班、高强度与生死情境'],['终身学习',4,'指南持续更新，需不断考核与再认证']],
+  subjects:[['生物',5,'人体结构与生理机制是全部专业知识的起点'],['化学',5,'药理、生化、检验均建立在化学基础之上'],['物理',3,'影像、设备原理与力学相关知识'],['语文 / 表达',4,'问诊沟通、病历书写与告知需要极高表达精度'],['英语',4,'前沿指南、文献与教材以英文为主']],
+  path:{hs:'物理 + 化学 + 生物（多数临床类专业要求物化双选），生物与化学需长期扎实',uni:'临床医学 / 口腔医学 / 护理学 / 药学等，学制普遍 5 年及以上',adv:'执业资格、规范化培训、住院医师培训是硬门槛，考研几乎是常态',life:'持续参加继续教育、职称评审与定期考核，专科资质需逐级积累'},
+  majors:['临床医学','口腔医学','护理学','药学','医学检验技术'],
+  outlook:'需求刚性、受周期影响小；培养周期长、前期投入大，老龄化与专科细分带来长期机会。',
+  income:{entry:[8,16],growth:[16,30],mature:[30,60],top:80,note:'规培期收入偏低，职称、科室、医院等级与地区差异极大；部分岗位含绩效与科研奖励'},
+  stages:[['学习与准入期','0–5 年','院校教育、实习、执业资格与规培','取得执业资格并完成规范化培训'],['独立实践期','5–12 年','独立接诊 / 值班，积累病例与专科方向','晋升主治 / 中级职称'],['成熟专家期','12–25 年','专科技术深化、带教、科研与科室管理','副高 / 正高职称，形成专业口碑'],['引领 / 延续期','25 年以上','学科带头、疑难会诊，或转向管理、教学','返聘、学术任职或行业影响力']],
+  radar:[92,94,86,60,90,88], threshold:'本科起，临床岗普遍需硕士 / 博士 + 规培 + 执业资格', span:'约 35–40 年，培养期长但职业寿命也长'
+ },
+ edu:{
+  name:'教育与人才培养族', industry:'教育 / 培训与知识服务',
+  chain:'产业链下游 · 面向学习者的知识传递与成长支持', color:'#8B5CF6',
+  keywords:['教师','老师','教授','讲师','幼师','导师','教育','教学','培训','辅导','教研','班主任','校长','课程','留学','特殊教育','家教'],
+  base:'把知识转化为可被理解、可被练习、可被评价的学习过程，同时承担育人、反馈与成长支持职责。',
+  skills:[['教学设计与表达',5,'拆解知识点、设计节奏，用可理解的方式讲清楚'],['学情诊断与反馈',5,'从作业、提问与错题判断学生真实卡点'],['课堂 / 班级管理',4,'维持秩序、调动参与并处理突发情况'],['评价与命题',4,'设计能真实反映能力的练习与测评']],
+  knowledge:[['任教学科知识体系','不止会做，还要知道常见误区与概念进阶顺序'],['教育学与心理学','学习规律、认知发展、动机与差异化教学'],['课程与课标','课程标准、教材体系与评价要求'],['教育政策与法规','未成年人保护、师德规范与家校边界']],
+  qualities:[['耐心与共情',5,'面对重复讲解、进度差异与情绪波动'],['表达与感染力',5,'让注意力有限的人愿意听、听得进'],['责任与边界感',4,'对学生成长负责，同时守住专业边界'],['持续反思',4,'同一节课每轮都应比上一轮更好']],
+  subjects:[['语文 / 表达',5,'讲解、提问、板书与书面反馈都依赖语言组织能力'],['任教学科',5,'数学 / 物理 / 英语等主科需远超教材深度的学科功底'],['政治 / 思政',3,'理解教育政策、师德规范与育人目标'],['历史 / 人文',3,'为通识与人文类课程提供背景厚度'],['英语',3,'拓展原版资源与双语教学机会']],
+  path:{hs:'按目标学科方向扎实打好对应主科，重视表达与写作训练',uni:'师范类专业 / 目标学科专业 + 教师资格证；公费师范、优师计划可关注',adv:'教育实习、试讲与公开课是关键；编制考试、普通话等级、教师资格需提前准备',life:'持续教研、职称评定、班主任与课题经历构成长期成长线'},
+  majors:['汉语言文学（师范）','数学与应用数学（师范）','英语（师范）','教育学','心理学'],
+  outlook:'刚性需求稳定，但结构变化明显：素质教育、职业教育、教育科技与升学规划方向增长，单纯讲授型岗位竞争加剧。',
+  income:{entry:[7,14],growth:[14,24],mature:[24,40],top:55,note:'公办体系受职称与地区影响，隐形福利与稳定性需一并考虑；培训与国际化学校浮动更大'},
+  stages:[['适应期','0–3 年','站稳课堂，掌握教材与班级管理','独立完整带班并完成一轮教学循环'],['成熟期','3–10 年','形成教学风格，承担教研与备课组工作','获评骨干教师 / 一级职称'],['骨干期','10–20 年','课程建设、带教新人、课题与学科影响力','高级职称、学科带头人或年级管理'],['引领期','20 年以上','教研管理、课程体系建设，或转向校长 / 教研员','区域教学影响力或教育管理岗位']],
+  radar:[80,86,94,74,78,84], threshold:'本科 + 教师资格证，重点中学与高校普遍要求硕士 / 博士', span:'约 30–38 年，经验与口碑随年限持续增值'
+ },
+ finlaw:{
+  name:'财经、法律与风险管理族', industry:'金融 / 财会 / 法律与专业服务',
+  chain:'产业链上游 · 为企业与个人提供规则、资本与风控支持', color:'#E9A23B',
+  keywords:['会计','审计','财务','税','金融','银行','投资','证券','基金','保险','律师','法务','法官','检察','精算','风控','合规','专利','知产','资产评估','信托'],
+  base:'在明确的规则与数字框架下处理资本、契约与风险，输出可审计、可追责的专业结论。',
+  skills:[['专业判断与核算 / 论证',5,'在规则框架内给出经得起复核的结论'],['数据分析与建模',4,'从报表中识别异常、趋势与风险敞口'],['法规检索与文书',5,'准确引用条文，撰写严谨的报告、合同或意见书'],['客户沟通与谈判',4,'在利益冲突中推进方案并守住底线']],
+  knowledge:[['财会 / 法律核心体系','准则、法典、监管规则与判例构成判断依据'],['经济学与金融学','利率、估值、市场机制与宏观周期'],['商法与税法 / 监管合规','交易结构、税务处理与信息披露'],['行业与商业常识','理解客户业务，才能给出可用而非正确的废话']],
+  qualities:[['严谨与零差错',5,'一个数字或条款的失误可能放大成重大损失'],['职业操守与独立',5,'利益冲突下保持独立判断是执业根基'],['抗压与deadline',4,'年报季、项目交割与开庭前高度集中'],['逻辑与说服',4,'把复杂结论讲给非专业决策者']],
+  subjects:[['数学',5,'建模、估值、统计与精算都依赖扎实数理能力'],['政治 / 思政',4,'法律、制度、政策与监管逻辑的早期基础'],['语文 / 表达',5,'文书、辩论、报告写作要求极高语言精度'],['英语',4,'跨境业务、国际准则与外文合同'],['历史 / 人文',3,'理解制度演进与商业惯例']],
+  path:{hs:'数学与语文并重，政治 / 历史有助于建立制度与商业理解',uni:'会计学 / 金融学 / 法学 / 经济学；财经与法学的院校平台与实习资源差异显著',adv:'CPA、法考、CFA、FRM 等资格是从业硬门槛或重要加分项，建议在校内开始规划',life:'资格 + 项目经验 + 客户资源共同决定上升速度，规则更新要求长期学习'},
+  majors:['会计学','金融学','法学','经济学','审计学'],
+  outlook:'稳定但门槛清晰，强监管与强资格依赖；合规、跨境、数据化风控与争议解决方向需求上升，基础核算与标准化文书受自动化挤压。',
+  income:{entry:[8,18],growth:[18,38],mature:[38,80],top:120,note:'头部机构与一线城市溢价极高，个体差异在所有职业族中最大之一；含奖金与项目分成'},
+  stages:[['准入期','0–3 年','完成资格考取，在指导下做基础底稿 / 案卷','取得核心执业资格并独立承担模块'],['成长期','3–8 年','独立负责项目或案件，开始直接面对客户','成为项目负责人 / 主办律师'],['成熟期','8–18 年','复杂交易与争议、团队管理、客户经营','合伙人、部门负责人或资深专家'],['引领期','18 年以上','机构管理、行业标准，或转向企业高管 / 顾问','区域或行业影响力']],
+  radar:[88,90,86,62,84,86], threshold:'本科 + 高含金量执业资格，头部机构偏好名校与实习经历', span:'约 35–40 年，资格与资源可延续到很高年限'
+ },
+ eng:{
+  name:'工程建造与实体技术族', industry:'建筑 / 制造 / 能源与基础设施',
+  chain:'产业链中游 · 把设计转化为可落地的实体系统', color:'#14B8A6',
+  keywords:['建筑','土木','工程','机械','电气','电子','自动化','材料','化工','能源','电力','测绘','造价','结构','制造','航空','车辆','环境','水利','暖通','工艺'],
+  base:'在物理约束、成本约束与安全规范之下，把方案变成可建造、可量产、可长期运行的实体系统。',
+  skills:[['工程计算与制图',5,'完成受力 / 电路 / 工艺计算并输出规范图纸'],['标准与规范应用',5,'设计必须满足强制条文、安全与验收标准'],['工具与软件',4,'CAD / BIM / CAE / EDA 等工程软件与测量仪器'],['现场与项目管理',4,'协调施工、供应链、进度与变更']],
+  knowledge:[['力学与材料 / 电路原理','解释结构为什么成立、系统为什么会失效'],['工程标准与法规','国标、行业规范、招投标与安全责任'],['制造与施工工艺','从图纸到实物的可实现性与公差'],['项目管理与经济','成本、工期、质量三角约束']],
+  qualities:[['严谨与安全意识',5,'工程失误代价高且不可逆'],['空间与系统思维',4,'在脑中构建三维结构与多系统耦合'],['协调与务实',4,'与施工方、甲方、监理多方博弈推进'],['耐心与责任',4,'项目周期长，细节需长期跟踪']],
+  subjects:[['物理',5,'力学、电磁、热学是全部工程学科的公共底座'],['数学',5,'建模、计算、统计与优化不可或缺'],['化学',3,'材料、腐蚀、环境与化工方向必需'],['计算机 / 信息技术',4,'BIM、仿真、数值计算与自动化已是标配'],['语文 / 表达',3,'标书、报告与跨方沟通需要清晰书面表达']],
+  path:{hs:'物理必选，数学与几何能力重点投入；可参加科创、机器人、结构设计类活动',uni:'土木工程 / 机械工程 / 电气工程 / 建筑学等；重视制图、力学与专业实习',adv:'注册类执业资格（结构、岩土、电气、造价等）是中后期晋升关键；现场经验不可替代',life:'从设计 / 现场走向项目总控、技术负责人或咨询管理，规范更新需持续跟进'},
+  majors:['土木工程','机械设计制造及其自动化','电气工程及其自动化','建筑学','工程力学'],
+  outlook:'总量与基建、制造业投资周期相关；城市更新、新能源、智能建造与高端制造方向结构性增长，传统重复绘图类工作被工具替代。',
+  income:{entry:[8,16],growth:[16,32],mature:[32,60],top:90,note:'注册证书、项目规模与设计院 / 施工单位性质影响显著，驻场与出差常有补贴'},
+  stages:[['助理期','0–3 年','熟悉规范与制图，在审核下完成标准设计 / 现场任务','独立出图或独立负责分项工程'],['独立期','3–8 年','承担专业负责人工作，考取注册资格','取得注册执业资格并主导中型项目'],['负责人期','8–18 年','项目总控、跨专业协调、成本与质量把关','担任专业负责人 / 项目经理'],['专家 / 管理期','18 年以上','技术审定、公司技术体系，或转向甲方与咨询','总工、技术总监或行业专家']],
+  radar:[90,88,76,66,82,80], threshold:'本科为主，设计院与研究院偏好硕士；注册资格是中后期硬门槛', span:'约 35–40 年，经验与证书随时间累积'
+ },
+ creative:{
+  name:'文化创意与内容表达族', industry:'文化传媒 / 设计 / 影视与内容产业',
+  chain:'产业链中游 · 创意策划与内容生产', color:'#EC4899',
+  keywords:['设计','画','动画','原画','影视','导演','编导','导播','编剧','摄影','音乐','写作','作家','广告','创意','艺术','舞蹈','表演','剪辑','ui','ux','插画','视觉','文案','漫画','配乐','策展'],
+  base:'把抽象的情绪、信息与想法转化为可被看见、听见、读到的作品，在审美判断与商业约束之间找平衡。',
+  skills:[['专业技法与工具',5,'手绘 / 软件 / 镜头 / 文字等表达手段需达到可交付水准'],['视觉 / 叙事语言',5,'构图、色彩、节奏、结构与受众心理'],['需求转译与提案',4,'把客户模糊的"感觉"翻译成可执行的方案并讲清理由'],['作品集与迭代',4,'以代表作承接机会，按反馈快速修改']],
+  knowledge:[['艺术史与设计理论','风格谱系、流派与审美判断的参照系'],['传播与受众心理','内容在什么渠道、被谁、以何种方式接收'],['版权与商业规则','授权、署名、委托合同与平台分成'],['制作流程与工艺','从创意到落地（印刷、渲染、拍摄、发行）的全链路']],
+  qualities:[['审美敏感与好奇',5,'持续输入才能避免风格枯竭'],['抗修改与抗压',5,'反复推翻、多方意见与截稿压力是常态'],['主动表达',4,'机会更多来自主动展示而非被动分配'],['开放与独立',4,'既要听得进反馈，也要保住作品的核心判断']],
+  subjects:[['艺术 / 设计',5,'造型、色彩与构成训练，越早开始越有复利'],['语文 / 表达',5,'文案、叙事、分镜与提案都依赖语言与故事能力'],['历史 / 人文',4,'为作品提供文化语境与题材厚度'],['英语',3,'接触国际作品、平台与外包项目'],['计算机 / 信息技术',3,'创作工具、三维与后期流程已高度数字化']],
+  path:{hs:'保持绘画 / 写作 / 影像的长期练习，建立作品档案；文化课不能放弃，综合类院校同样看高考成绩',uni:'视觉传达 / 动画 / 数字媒体 / 戏剧影视 / 汉语言文学等；艺考需提前准备作品集',adv:'实习、比赛、平台发布与真实商业项目比文凭更能证明能力',life:'每 2–3 年更新工具与风格，中期向主创、艺术指导、独立工作室或品牌方分化'},
+  majors:['视觉传达设计','动画','数字媒体艺术','戏剧影视文学','汉语言文学'],
+  outlook:'门槛在作品而非学历，机会高度头部化；AI 工具压缩了基础执行岗，但抬高了审美、叙事与创意策划的价值。',
+  income:{entry:[6,13],growth:[13,28],mature:[28,55],top:90,note:'波动极大，freelance 与项目制占比高；头部主创、个人 IP 与商业合作收入远高于平均值'},
+  stages:[['入行期','0–3 年','执行岗，打磨技法与流程，积累可展示作品','形成第一批完整商业作品'],['独立期','3–8 年','独立负责模块 / 项目，建立个人风格','成为主设计、主笔或核心执行'],['主创期','8–18 年','把控创意方向、带团队、直接对话客户','艺术指导、导演、主创或工作室合伙人'],['引领期','18 年以上','个人风格与行业影响力，或转向教育、品牌与创业','奖项、个人 IP 或品牌主理人']],
+  radar:[88,72,80,96,84,88], threshold:'作品集优先于学历，院校与行业资源影响入行渠道', span:'约 30–40 年，不受固定退休节奏强约束'
+ },
+ biz:{
+  name:'商业经营与组织管理族', industry:'商业服务 / 零售消费 / 企业职能',
+  chain:'产业链下游 · 连接产品、市场与组织', color:'#F97316',
+  keywords:['市场','营销','销售','运营','人力','hr','招聘','供应链','采购','物流','电商','商务','客户','管理','创业','咨询','项目经理','品牌','公关','渠道','贸易','店长','秘书','行政','助理','文员'],
+  base:'围绕增长、效率与协作做资源配置，通过他人与流程拿到结果，成果直接由业务指标衡量。',
+  skills:[['数据分析与目标拆解',5,'把业务目标拆成可执行的动作与指标'],['沟通与 influence',5,'跨部门、跨利益方推动事情发生'],['项目管理与执行',4,'排优先级、控节奏、处理变更与风险'],['商业写作与提案',4,'用一页纸讲清问题、方案与预期收益']],
+  knowledge:[['市场营销 / 管理学','用户、渠道、定位、组织结构与激励'],['财务与商业常识','读懂损益、成本结构与投入产出'],['行业与竞品','产业链位置、竞争格同与关键成功要素'],['法律与合规基础','合同、劳动、广告与数据合规']],
+  qualities:[['结果导向',5,'指标不会因过程辛苦而自动变好'],['抗压与适应',5,'目标、组织与策略频繁变化'],['人际敏感与协作',5,'大量成果依赖他人配合'],['主动与好奇',4,'机会常来自主动发现问题而非分配任务']],
+  subjects:[['数学',4,'数据、预算、投放与转化率分析需要基本数理能力'],['语文 / 表达',5,'提案、谈判、文案与汇报是日常主战场'],['英语',4,'外企、跨境与海外业务的重要杠杆'],['政治 / 经济',3,'理解政策、市场与商业制度环境'],['计算机 / 信息技术',3,'数据工具、协作系统与自动化已成基础技能']],
+  path:{hs:'重视数学与语文的实际应用，参与社团、学生会、模拟经营与真实小项目',uni:'工商管理 / 市场营销 / 经济学 / 心理学 / 供应链管理；专业壁垒不高，实习质量更关键',adv:'尽早积累 2–3 段真实实习，掌握 Excel / SQL / 可视化工具；案例大赛与商业分析训练有效',life:'从执行到带团队、从单一职能到综合经营，行业理解与人脉是长期资产'},
+  majors:['工商管理','市场营销','经济学','供应链管理','心理学'],
+  outlook:'入口宽、转行成本低，但替代性也高；具备数据能力与行业纵深的复合型人才更抗周期。',
+  income:{entry:[7,15],growth:[15,32],mature:[32,70],top:120,note:'销售 / 业务岗奖金与提成占比高，波动大；行业与公司阶段差异极大'},
+  stages:[['执行期','0–3 年','熟悉业务流程与工具，独立完成单项任务','独立负责一个渠道 / 模块并对指标负责'],['独立期','3–8 年','负责完整项目或团队，参与策略制定','带小团队、稳定达成业务目标'],['管理期','8–18 年','部门 / 区域经营、预算与组织建设','成为部门负责人或业务负责人'],['经营期','18 年以上','公司级经营决策，或转向创业与顾问','高管、合伙人或创业者']],
+  radar:[74,72,94,80,88,82], threshold:'本科为主，专业限制小，实习与业务结果比学校更被看重', span:'约 30–40 年，路径非线性、转岗与跨行业常见'
+ },
+ public:{
+  name:'公共治理与信息传播族', industry:'公共管理 / 新闻出版 / 社会服务',
+  chain:'产业链上游 · 公共规则、信息流通与社会服务', color:'#6366F1',
+  keywords:['公务员','政府','事业编','警察','消防','军人','外交','记者','新闻','编辑','翻译','社工','公益','图书馆','档案','出版','主持','播音','海关','税务','村官'],
+  base:'在公共规则与信息秩序中工作，产出面向公众的服务、记录或判断，强调程序正当、事实准确与社会影响。',
+  skills:[['公文 / 采编写作',5,'准确、规范、可追溯的书面表达是核心产出'],['事实核查与调研',5,'多方求证、区分事实与观点'],['政策 / 条文理解与执行',5,'按程序办事并能解释依据'],['公众沟通与协调',4,'面对群众、媒体与跨部门场景保持清晰稳妥']],
+  knowledge:[['法律与行政 / 新闻理论','制度框架、权责边界与职业规范'],['政治与社会常识','政策背景、社会结构与公共利益取向'],['历史与国情','理解制度来路与现实约束'],['外语 / 方言与跨文化','涉外、采访与多语场景的沟通基础']],
+  qualities:[['准确与克制',5,'一次表述失误可能放大为公共事件'],['责任与服务意识',5,'工作结果直接作用于具体的人'],['稳定与耐心',4,'流程长、反馈慢、重复性强'],['立场与判断',4,'在复杂信息中保持独立与分寸']],
+  subjects:[['语文 / 表达',5,'公文、采访、编译与口语表达全天候使用'],['政治 / 思政',5,'制度、政策与公共事务的知识基础'],['历史 / 人文',4,'提供语境、分寸与判断力'],['英语',4,'涉外、外媒与翻译方向的硬要求'],['地理',3,'理解区域差异、资源与空间议题']],
+  path:{hs:'语文、政治、历史扎实投入，坚持写作与公共议题阅读',uni:'法学 / 汉语言文学 / 新闻传播 / 行政管理 / 外语等；选调与公考需提前了解报考条件',adv:'申论与面试能力靠长期积累；实习、调研报告、校园媒体与志愿服务有帮助',life:'持续跟进政策与法规更新，职称 / 职级按年限与考核逐级晋升'},
+  majors:['法学','汉语言文学','新闻学','行政管理','外国语言文学'],
+  outlook:'稳定性高、竞争激烈；融媒体、国际传播、数据新闻与基层治理数字化带来新岗位形态。',
+  income:{entry:[7,13],growth:[13,22],mature:[22,38],top:50,note:'地区与系统差异大，需综合考量稳定性、保障与隐性福利，不宜只比现金收入'},
+  stages:[['录用适应期','0–3 年','熟悉流程与规范，完成基础岗位任务','独立承担常规业务'],['业务骨干期','3–10 年','承担专项、调研与对外协调','成为科室 / 部门业务骨干'],['管理期','10–22 年','带队、统筹项目与政策执行','职级晋升或部门负责人'],['资深期','22 年以上','政策制定、行业指导，或转向智库与教学','资深专家或领导岗位']],
+  radar:[76,84,88,62,84,80], threshold:'本科及以上，多数岗位需通过公开招录考试', span:'约 35–40 年，职级与资历关联度高'
+ },
+ service:{
+  name:'生活服务与技能实操族', industry:'住宿餐饮 / 交通运输 / 生活服务',
+  chain:'产业链终端 · 面向消费者的现场交付', color:'#E8593F',
+  keywords:['厨师','烹饪','餐饮','酒店','旅游','导游','美容','健身','飞行','船员','司机','空乘','家政','宠物','烘焙','咖啡','茶艺','服务','调酒','瑜伽','育婴','疗法','芳疗','理疗','按摩','康养'],
+  base:'以可反复练习的手上功夫与现场服务品质交付体验，能力高度依赖实操时长与标准化训练。',
+  skills:[['核心实操技法',5,'手上功夫靠大量重复训练形成肌肉记忆'],['标准化与流程',5,'品质稳定比偶尔惊艳更重要'],['现场应变与服务',4,'高峰期、投诉与突发状况的即时处理'],['成本与安全管理',4,'损耗、库存、卫生与安全规范']],
+  knowledge:[['原料 / 设备 / 专业原理','理解材料特性与工具边界'],['卫生、安全与法规','从业资质、操作规范与责任边界'],['服务与消费心理','理解顾客预期与体验设计'],['经营基础','定价、毛利、人效与排班']],
+  qualities:[['吃苦与体力',5,'长时间站立、高峰强度与轮班'],['细致与稳定',5,'重复动作仍保持同一水准'],['亲和与情绪管理',4,'始终面对人的即时反馈'],['精益求精',4,'从会做到做稳、做快、做出风格']],
+  subjects:[['体育 / 生理',4,'体能、耐力与身体协调是长期从业基础'],['化学',3,'食材、发酵、营养与清洁用品的反应原理'],['语文 / 表达',4,'点单沟通、投诉处理与服务话术'],['数学',3,'成本核算、配比与排班计算'],['英语',3,'高星级酒店、航空与入境游客场景常用']],
+  path:{hs:'文化课与动手实践并重，重视职业院校、实训基地与技能竞赛通道',uni:'烹饪工艺 / 酒店管理 / 交通运输 / 民航飞行等应用型专业；也可走学徒制路径',adv:'职业资格证书、技能等级认定与行业赛事是能力凭证，真实门店 / 一线时长不可省略',life:'从执行岗到领班、主厨、店长，或自主开店、转培训与品控'},
+  majors:['烹饪与营养教育','酒店管理','交通运输','飞行技术','休闲体育'],
+  outlook:'就业容量大、入行快、地域分布广；标准化与连锁化提升效率，具备管理、研发与品牌能力者上升空间明显。',
+  income:{entry:[5,10],growth:[10,20],mature:[20,40],top:70,note:'含住宿、餐补等福利；主厨、机长、店长与自营门店收入显著高于基层岗位'},
+  stages:[['学徒期','0–3 年','基础功与流程训练，取得从业资格','独立上岗并稳定交付'],['熟练期','3–8 年','独当一面，带新人，形成专长','成为骨干 / 领班'],['主理期','8–18 年','负责品质、团队与现场经营','主厨、店长、机长或技术负责人'],['经营期','18 年以上','多店管理、标准输出，或创业与教学','区域管理、品牌主理人或培训师']],
+  radar:[88,66,82,66,90,74], threshold:'学历门槛相对低，实操时长、证书与作品 / 履历更关键', span:'约 30–40 年，体力要求高的岗位中期常转向管理或培训'
+ },
+ science:{
+  name:'科学研究与专业技术族', industry:'科研 / 技术服务 / 农林环境与检测',
+  chain:'产业链上游 · 知识生产与技术方案供给', color:'#0EA5A4',
+  keywords:['研究','科学家','实验','研究员','天文','地质','考古','统计','农','林','渔','畜牧','园艺','食品','环保','生态','气象','检测','计量','实验室','博后','院士'],
+  base:'以系统观察、实验与建模扩展认知边界或解决技术问题，产出可验证、可复现的结论。',
+  skills:[['实验设计与方法',5,'控制变量、设置对照并保证可复现'],['数据分析与建模',5,'统计推断、误差分析与可视化'],['文献检索与综述',5,'快速定位前沿并判断证据质量'],['学术写作与表达',4,'把结果写成论文、报告或可落地方案']],
+  knowledge:[['学科基础理论','本领域的概念体系与核心模型'],['研究方法与统计','实验、调查、模拟与推断的规范'],['仪器与工具链','设备原理、编程与数据处理流程'],['科研伦理与规范','署名、数据真实性与安全合规']],
+  qualities:[['好奇与问题意识',5,'能提出值得花时间的问题'],['耐心与抗失败',5,'多数实验以阴性结果收场'],['严谨与诚实',5,'数据不可修饰，结论不可夸大'],['长期专注',4,'成果周期以年计']],
+  subjects:[['数学',5,'建模、统计与几乎所有定量研究的通用语言'],['物理 / 化学 / 生物',5,'按目标方向选定主攻理科并学深'],['英语',5,'论文、数据库与国际合作以英文为主'],['计算机 / 信息技术',4,'数据分析、模拟与自动化实验已成标配'],['语文 / 表达',3,'论文、基金申请与成果转化依赖清晰写作']],
+  path:{hs:'按方向选定理科组合，重视实验、科创与学科竞赛',uni:'目标理科 / 工科 / 农学专业，尽早进入实验室；读研几乎是研究岗的必经路径',adv:'科创项目、论文、学术会议与导师选择比课程分数更影响发展',life:'博士 → 博士后 / 助理研究员 → 独立课题负责人，或转向企业研发与技术支持'},
+  majors:['数学与应用数学','物理学','化学','生物科学','统计学'],
+  outlook:'学术岗竞争激烈、培养周期长；企业研发、检测认证、农业科技与双碳环保方向提供了更宽的出口。',
+  income:{entry:[8,16],growth:[16,30],mature:[30,55],top:90,note:'高校 / 院所与企业研发差异明显，课题经费、成果转化与人才计划会带来额外收入'},
+  stages:[['训练期','0–6 年','硕博阶段打基础，掌握方法与工具','完成学位并产出首批成果'],['独立初期','6–13 年','独立承担课题，建立研究方向','拿到首个主持项目 / 稳定产出'],['成熟期','13–25 年','带团队、拿重点课题、形成学术影响','成为课题组长 / 技术专家'],['引领期','25 年以上','方向规划、平台建设与行业影响力','学科带头人或首席科学家']],
+  radar:[88,96,70,88,82,96], threshold:'研究岗普遍要求博士，企业研发硕士可入行', span:'约 35–45 年，成果与影响力可延续至退休后'
+ },
+ general:{
+  name:'通用职业特征模型', industry:'跨行业 / 综合服务',
+  chain:'需结合具体岗位判断所处产业链位置', color:'#64748B',
+  keywords:[],
+  base:'大多数职业共享一套可迁移的底层结构：以专业知识解决特定问题、以工具与流程保证交付质量、以协作与沟通放大产出。',
+  skills:[['岗位核心技法',5,'该职业最主要的可交付技能，需通过反复练习达到稳定水准'],['工具与流程',4,'熟练使用行业通用工具并遵循标准流程'],['信息检索与判断',4,'找到可靠信息、分辨质量并作出取舍'],['协作与交付',4,'与他人配合，按约定时间与标准完成任务']],
+  knowledge:[['领域基础知识','该职业的概念体系、术语与基本规则'],['行业规则与标准','规范、准入要求与常见做法'],['上下游常识','理解客户、供应商与协作方各自关切'],['法律与职业伦理','责任边界、合规与隐私要求']],
+  qualities:[['责任心与可靠',5,'稳定交付是建立职业信誉的前提'],['沟通与共情',5,'理解对方真实需求，减少返工'],['持续学习',4,'工具与规则持续变化'],['抗压与适应',4,'面对不确定性仍能推进']],
+  subjects:[['语文 / 表达',4,'阅读、写作与口头表达是所有职业的通用杠杆'],['数学',4,'训练逻辑、量化分析与结构化思考'],['英语',4,'获取更广的信息源与跨区域机会'],['计算机 / 信息技术',4,'数字化工具已成为通用工作底座'],['目标相关主科',4,'按该职业对应的专业方向，重点投入一到两门学科']],
+  path:{hs:'先夯实语文、数学、英语三门通用学科，再通过阅读与实践确认兴趣方向',uni:'选择与该职业最接近的专业，同时保留辅修与转专业的可能性',adv:'用实习、项目与作品验证选择，比单纯修课更能确认匹配度',life:'建立可迁移能力组合，为中期转岗与晋升留出空间'},
+  majors:['建议按具体职业方向反查本科专业目录'],
+  outlook:'行业前景需结合具体地区与岗位判断，建议查阅招聘平台、行业报告并访谈 2–3 位从业者。',
+  income:{entry:[6,12],growth:[12,24],mature:[24,45],top:70,note:'这是跨行业通用参考带，实际差异可能非常大，请务必以具体岗位招聘信息校准'},
+  stages:[['适应期','0–3 年','熟悉岗位与行业，补齐基础技能','独立完成常规任务'],['成长期','3–8 年','形成专长，承担更复杂任务','成为可信赖的业务骨干'],['成熟期','8–18 年','带团队 / 管项目，参与决策','担任负责人或资深专家'],['引领期','18 年以上','方向判断、组织影响或自主创业','管理岗位、专家或创业者']],
+  radar:[70,72,78,70,78,80], threshold:'视具体岗位而定，建议核对招聘要求', span:'约 30–40 年，路径受行业与个人选择影响较大'
+ }
+};
+
+/* =====================================================================
+   二、精确职业知识库（CAREERS）—— 未写出的字段自动继承职业族
+   ===================================================================== */
+const CAREERS = [
+ {name:'软件工程师',aliases:['程序员','开发工程师','后端开发','前端开发','全栈工程师','码农','java工程师'],group:'it',
+  def:'把业务需求转化为可运行、可维护的软件系统的技术人员。',
+  desc:'负责从需求拆解、方案设计到编码、测试、上线与迭代的完整链路。既要和产品、设计协作把问题想清楚，也要对代码质量、性能与线上稳定性负责。',
+  daily:['阅读需求与设计文档，拆解开发任务','编写、评审与重构代码，补齐自动化测试','从日志与链路定位并修复线上缺陷','参与技术方案评审与版本发布'],
+  skills:[['编程语言与工程实践',5,'至少精通一门主力语言，写出可读、可测、可维护的代码'],['数据结构与算法',5,'判断复杂度并选对结构，是工程与面试的共同底座'],['系统设计与架构',4,'分层、模块化、高并发、缓存与存储选型'],['工程化与协作',4,'Git、Code Review、CI/CD、测试与灰度发布']],
+  knowledge:[['计算机组成与操作系统','进程、内存、I/O 与网络如何约束一段程序'],['数据库与数据建模','索引、事务、一致性与表结构设计'],['计算机网络','HTTP/TCP、DNS、传输安全与常见协议'],['软件工程与设计模式','需求管理、测试、重构与协作方法论']],
+  subjects:[['数学',5,'离散数学与逻辑建模直接决定抽象与算法水平'],['英语',4,'官方文档、论文与开源社区以英文为主'],['计算机 / 信息技术',5,'编程与计算思维越早接触越有复利'],['物理',3,'帮助建立硬件与系统底层的整体观'],['语文 / 表达',3,'文档、方案与汇报是晋升后的分水岭']],
+  majors:['计算机科学与技术','软件工程','人工智能','数据科学与大数据技术'],
+  outlook:'需求总量大但结构分化：通用业务开发竞争加剧，AI 工程、基础软件、安全与云原生方向缺口持续。',
+  income:{entry:[12,22],growth:[22,45],mature:[45,90],top:100,note:'一线城市头部企业与技术稀缺方向溢价明显；二三线约为 60–75%'},
+  radar:[94,86,68,80,76,96]},
+
+ {name:'人工智能工程师',aliases:['算法工程师','ai','ai工程师','机器学习工程师','大模型工程师','深度学习工程师'],group:'it',
+  def:'设计、训练并部署能从数据中学习规律的模型，让系统具备预测或生成能力。',
+  desc:'工作横跨数据、模型与工程：从问题定义与数据构建，到模型选型、训练调优，再到推理服务上线与效果评估。近两年重心明显向大模型应用、微调与推理优化迁移。',
+  daily:['定义问题与评价指标，清洗和构建数据集','复现论文、训练与调参，记录实验结论','把模型封装为可调用的推理服务并优化延迟','跟进评测结果与业务反馈，持续迭代'],
+  skills:[['机器学习与深度学习',5,'理解模型假设、损失、泛化与失效边界'],['Python 与工程实现',5,'能写实验代码，也能写可上线的服务'],['数学建模与实验设计',5,'线性代数、概率统计与优化是读懂模型的钥匙'],['数据处理与特征工程',4,'数据质量往往比模型结构更决定效果']],
+  knowledge:[['线性代数 / 概率 / 最优化','模型推导与训练动态的数学基础'],['模型架构与训练方法','Transformer、注意力、微调与对齐技术'],['分布式计算与算力','GPU、并行训练、推理加速与成本控制'],['评测与伦理','幻觉、偏见、数据合规与安全边界']],
+  subjects:[['数学',5,'线性代数、概率论与最优化是最高优先级学科'],['英语',5,'论文、开源实现与技术社区几乎全英文'],['计算机 / 信息技术',5,'编程、数据结构与系统工程缺一不可'],['物理',3,'提供建模直觉与对复杂系统的理解'],['语文 / 表达',3,'把技术结论讲给业务方与决策者']],
+  majors:['人工智能','计算机科学与技术','数学与应用数学','统计学','自动化'],
+  outlook:'处于高投入高波动阶段：顶尖人才缺口大，但岗位更集中在头部企业与有数据壁垒的行业，通用调参岗正在被工具压缩。',
+  income:{entry:[18,35],growth:[35,70],mature:[70,130],top:180,note:'头部企业算法岗起薪显著高于普通开发；差异主要来自论文 / 竞赛 / 项目深度'},
+  radar:[96,96,66,92,78,98],threshold:'硕士及以上为主，顶会论文、竞赛或高质量项目是核心敲门砖'},
+
+ {name:'数据分析师',aliases:['数据运营','商业分析师','bi分析师','数据专员'],group:'it',
+  def:'用数据描述业务现状、定位问题原因，并为决策提供可验证的依据。',
+  desc:'介于业务与技术之间：把模糊的业务问题翻译成指标与查询，用 SQL / Python 取数建模，最终以图表和结论推动具体动作。价值不在于会做表，而在于结论能否改变决策。',
+  daily:['与业务方对齐问题，定义口径与指标体系','写 SQL 取数、清洗异常并做探索分析','搭建看板、做归因与专题分析','输出结论与建议，跟踪落地效果'],
+  skills:[['SQL 与数据处理',5,'准确、高效地取数是所有分析的前提'],['统计与归因方法',5,'区分相关与因果，避免被指标误导'],['可视化与数据叙事',4,'让非技术读者一眼看到重点与行动项'],['业务理解与沟通',5,'不懂业务的分析只是漂亮图表']],
+  knowledge:[['统计学与实验设计','抽样、显著性、置信区间与 A/B 测试'],['数据库与数据仓库','表结构、维度建模与数据血缘'],['业务与行业知识','收入构成、转化漏斗与关键成本项'],['数据治理与合规','口径统一、隐私与数据安全']],
+  subjects:[['数学',5,'统计、概率与逻辑推理是分析判断的底座'],['计算机 / 信息技术',4,'SQL、Python 与数据工具是日常生产工具'],['语文 / 表达',4,'把结论写清楚往往比算出来更难'],['英语',3,'查阅方法文档与国外分析实践'],['政治 / 经济',3,'理解宏观与行业环境对指标的影响']],
+  majors:['统计学','数据科学与大数据技术','经济学','数学与应用数学','信息管理与信息系统'],
+  outlook:'基础取数与报表岗正被 BI 工具和 AI 替代，具备实验设计、因果推断与业务策略能力的分析人才更稀缺。',
+  income:{entry:[9,18],growth:[18,35],mature:[35,65],top:85,note:'金融、互联网与咨询行业数据岗高于传统行业平均水平'},
+  radar:[84,84,88,72,72,88]},
+
+ {name:'产品经理',aliases:['产品总监','pm','互联网产品经理','产品策划'],group:'it',
+  def:'判断该做什么、为什么做，并组织团队把产品做出来且做成。',
+  desc:'不直接管人，却要对结果负责：从用户研究与需求优先级，到方案设计、评审、跟进研发与上线复盘。核心能力是在技术可行性、商业价值与用户体验之间做取舍。',
+  daily:['做用户访谈、竞品与数据复盘，找真问题','写需求文档与原型，组织评审并排优先级','跟进开发、测试与上线，处理需求变更','看数据、收集反馈，决定下一轮迭代方向'],
+  skills:[['需求判断与优先级',5,'能说清为什么不做比列一堆功能更重要'],['用户研究与问题定义',5,'区分用户说出的要求和真实的问题'],['结构化表达与文档',5,'PRD、原型与一页纸提案是主要产出'],['跨团队推动',5,'在没有汇报关系的前提下让事情发生']],
+  knowledge:[['产品方法论','需求分层、增长模型、MVP 与生命周期'],['技术与设计常识','懂实现成本与交互原则，才不会提方案时被架空'],['商业与数据分析','定价、转化、留存与单位经济模型'],['行业与用户场景','所在领域的真实工作流与决策链']],
+  subjects:[['语文 / 表达',5,'写作、说服与结构化表达是日常主战场'],['数学',4,'数据分析、指标拆解与优先级量化'],['政治 / 经济',3,'理解组织、市场与制度约束'],['英语',4,'拓展海外产品与前沿方法资料'],['计算机 / 信息技术',3,'不必会写，但要懂系统如何工作']],
+  majors:['不限专业，常见为计算机、工业设计、心理学、经济学、工商管理'],
+  outlook:'入门宽但分化快：执行型需求翻译岗收缩，具备行业纵深、商业化与 AI 产品能力的产品负责人更抢手。',
+  income:{entry:[10,20],growth:[20,40],mature:[40,80],top:110,note:'与产品阶段、业务规模强相关，负责营收的产品线薪酬弹性更大'},
+  radar:[72,70,96,86,84,90],threshold:'专业不限，实习经历与作品 / 项目复盘比学历更关键'},
+
+ {name:'网络安全工程师',aliases:['安全工程师','渗透测试','白帽子','信息安全工程师','sec'],group:'it',
+  def:'发现、评估并修补信息系统中的漏洞，保护数据与服务的机密性、完整性与可用性。',
+  desc:'既要做攻防对抗与技术验证，也要建制度、做合规与应急响应。这个岗位的特殊之处在于：对手是主动的人，而不是随机故障。',
+  daily:['做资产梳理、漏洞扫描与渗透测试','分析告警与日志，研判攻击链并应急响应','设计加固方案、推动业务方修复','跟进等保、合规要求与安全意识培训'],
+  skills:[['漏洞原理与攻防',5,'理解 Web、系统、网络各层常见缺陷的成因'],['流量与日志分析',5,'从海量噪声里还原真实攻击路径'],['编程与自动化',4,'写脚本、造工具、做批量验证'],['合规与风险管理',4,'把技术问题翻译成管理层可决策的风险项']],
+  knowledge:[['网络协议与系统原理','攻击面建立在协议与操作系统实现之上'],['密码学基础','认证、加密、密钥管理与常见误用'],['安全法规与标准','等保、数据安全法、个人信息保护要求'],['攻防工具与情报','常见框架、CVE 与漏洞披露机制']],
+  subjects:[['计算机 / 信息技术',5,'网络、系统与编程是最直接的前置能力'],['数学',4,'密码学、逻辑与抽象推理的基础'],['英语',5,'漏洞披露、工具文档与情报以英文为主'],['政治 / 思政',3,'理解网络空间法规与合规要求'],['语文 / 表达',3,'风险报告需要让非技术管理层看懂']],
+  majors:['网络空间安全','信息安全','计算机科学与技术','密码科学与技术'],
+  outlook:'合规驱动 + 攻防实战双轮需求，云安全、数据安全与 AI 安全方向增长明确，属长期缺口型岗位。',
+  income:{entry:[10,20],growth:[20,42],mature:[42,80],top:110,note:'实战能力、竞赛经历与证书（如 CISP、OSCP）对定价影响明显'},
+  radar:[92,88,74,84,82,94]},
+
+ {name:'UI / UX 设计师',aliases:['交互设计师','用户体验设计师','ui设计师','ux设计师','界面设计师'],group:'creative',
+  def:'设计人与产品之间的交互路径，让界面既好看，也易理解、易完成目标。',
+  desc:'UI 更偏视觉呈现，UX 更偏流程与体验逻辑，实际岗位常合并。工作从用户研究与信息架构开始，经线框、原型、视觉规范，到与研发对接落地并验证数据。',
+  daily:['做用户访谈、竞品与可用性问题分析','画信息架构、流程图与交互原型','输出视觉稿、组件规范与设计系统','与研发对齐实现细节，上线后看数据复盘'],
+  skills:[['交互与信息架构',5,'把复杂功能组织成用户走得通的路径'],['视觉与组件规范',5,'层级、节奏、色彩一致性与可复用设计系统'],['原型与工具',4,'Figma 等工具需达到高效率交付水准'],['用户研究与验证',4,'用测试结果而非个人审美做判断']],
+  knowledge:[['认知心理学与人机交互','注意、记忆、负荷与心智模型'],['设计系统与平台规范','iOS / Android / Web 各自的设计约束'],['前端实现常识','了解布局、响应式与组件边界'],['可用性与无障碍','可访问性标准与包容性设计']],
+  subjects:[['艺术 / 设计',5,'造型、色彩、构成与审美需要长期训练'],['语文 / 表达',4,'用户研究访谈与方案陈述依赖表达'],['计算机 / 信息技术',4,'理解前端实现才能落地而非停在效果图'],['数学',3,'信息结构、栅格与数据可视化中的逻辑'],['英语',3,'国际设计规范与作品社区以英文为主']],
+  majors:['视觉传达设计','数字媒体艺术','工业设计','交互设计','心理学'],
+  outlook:'纯视觉执行岗受工具与 AI 挤压明显，具备用户研究、设计系统与业务指标意识的体验设计者更稳。',
+  income:{entry:[9,18],growth:[18,36],mature:[36,65],top:90,note:'一线互联网与大厂设计岗高于传统广告与外包，作品集质量决定起点'},
+  radar:[86,74,86,90,78,88]},
+
+ {name:'临床医生',aliases:['医生','医师','内科医生','外科医生','主治医师'],group:'medical',
+  def:'依据医学证据对患者进行诊断、治疗与随访，并对医疗决策承担责任。',
+  desc:'培养周期在所有职业中几乎最长：院校教育、执业资格、规范化培训、专科深造逐级递进。日常工作混合了门诊、病房、病历、值班与持续考核，且必须终身跟进指南更新。',
+  daily:['门诊或查房，采集病史、查体并判断检查方案','解读检验与影像结果，制定或调整治疗方案','书写病历、医嘱，完成知情告知','值班、会诊、病例讨论与继续教育'],
+  skills:[['临床思维与鉴别诊断',5,'从有限信息中收敛到最可能的判断并排除危重项'],['规范操作与应急处置',5,'在时间压力下按流程稳定完成操作'],['循证医学应用',5,'依据指南与证据等级而非个人经验'],['沟通与告知',5,'向患者家属解释风险、方案与坏消息']],
+  knowledge:[['基础医学','解剖、生理、病理、药理构成全部判断底座'],['临床专科体系','诊断标准、诊疗指南、并发症与禁忌'],['医学法规与伦理','执业规范、知情同意、隐私与纠纷处理'],['影像、检验与统计','辅助检查的判读与证据评价']],
+  subjects:[['生物',5,'人体结构与生理机制是专业知识的起点'],['化学',5,'药理、生化与检验建立在化学之上'],['英语',4,'前沿指南与文献以英文为主'],['语文 / 表达',4,'问诊、病历与告知要求极高语言精度'],['物理',3,'影像设备与人体力学相关原理']],
+  path:{hs:'物理 + 化学 + 生物（多数临床类专业要求化学或物化双选），生物、化学需长期扎实',uni:'临床医学 5 年制 / 5+3 一体化 / 八年制；解剖、生理、病理、诊断学是分水岭课程',adv:'执业医师资格 → 住院医师规范化培训 3 年 → 专科培训；三甲医院岗位普遍需硕博与科研成果',life:'职称逐级评审、定期考核与继续教育学分，指南持续更新要求终身学习'},
+  majors:['临床医学','麻醉学','医学影像学','儿科学','中医学'],
+  outlook:'需求刚性、抗周期，但前期投入极大；老龄化、慢病管理与专科细分带来长期机会，基层与全科方向缺口更明显。',
+  income:{entry:[8,16],growth:[16,32],mature:[35,70],top:120,note:'规培期收入明显偏低；职称、科室、医院等级与地区差异是所有职业中最大的一类'},
+  threshold:'本科 5 年起，三甲医院普遍要求博士 + 规培 + 执业医师资格',
+  stages:[['院校与规培期','0–8 年','临床医学教育、执业资格与住院医师规范化培训','取得执业资格并完成规培'],['独立实践期','8–15 年','独立接诊、值班，积累病例并确定专科方向','晋升主治 / 中级职称'],['专科成熟期','15–25 年','专科技术深化、带教、科研与科室管理','副高 / 正高，形成专业口碑'],['学科引领期','25 年以上','疑难会诊、学科建设，或转向管理与教学','学科带头人、返聘或学术任职']],
+  radar:[94,96,88,62,92,92],span:'约 35–40 年，起步晚但职业寿命长、经验持续增值'},
+
+ {name:'护士',aliases:['护士','护理师','临床护士','男护','护理人员'],group:'medical',
+  def:'执行医嘱、提供持续照护与病情观察，是医疗团队中与患者接触最密集的角色。',
+  desc:'不只是打针发药：要持续监测病情变化、识别异常并第一时间上报，同时承担健康教育、心理支持与大量文书。轮班与体力强度是入行前必须真实评估的部分。',
+  daily:['交接班、评估患者并执行医嘱与治疗','监测生命体征，识别异常并报告医生','完成护理记录、宣教与出入院指导','配合急救、手术与多学科协作'],
+  skills:[['护理操作规范',5,'无菌、查对与操作流程不可省略'],['病情观察与判断',5,'最早发现危重信号的往往是一线护理'],['应急配合',4,'抢救、转运与突发事件中的协同'],['沟通与安抚',5,'面对患者疼痛、焦虑与家属情绪']],
+  knowledge:[['基础护理与专科护理','各系统常见病的护理要点与并发症预防'],['药理与用药安全','配伍禁忌、剂量核对与不良反应观察'],['解剖生理与检验常识','看懂指标变化背后的意义'],['院感与法规','感染控制、护理文书与执业规范']],
+  subjects:[['生物',5,'理解人体结构与生理变化'],['化学',4,'药物、消毒与体液相关知识'],['语文 / 表达',4,'护理记录与健康教育要求准确清晰'],['体育 / 生理',4,'轮班、站立与搬运需要长期体能储备'],['英语',3,'涉外护理与外文文献']],
+  majors:['护理学','助产学','护理（专科起点可升学）'],
+  outlook:'需求长期稳定且缺口明确；专科护士、重症、手术室、社区与老年护理方向上升通道清晰，学历与专科资质越来越重要。',
+  income:{entry:[7,13],growth:[13,22],mature:[22,38],top:55,note:'夜班与绩效补贴占一定比例，三甲与一线城市高于基层'},
+  radar:[88,86,90,58,92,84],threshold:'大专及以上可入行，三甲医院与专科护士偏好本科及以上'},
+
+ {name:'药剂师',aliases:['药师','执业药师','临床药师','药房'],group:'medical',
+  def:'审核用药方案、保障药品质量与合理使用，并提供用药咨询。',
+  desc:'在医院、社会药房或药企之间分工差异很大：医院偏临床药学与用药审核，零售偏药学服务与经营，药企偏注册、质控与研发支持。共同底线是用药安全。',
+  daily:['审核处方，识别相互作用、剂量与禁忌','调剂、配发药品并做用药交代','参与临床查房或提供用药咨询','药品验收、储存管理与不良反应上报'],
+  skills:[['处方审核与用药判断',5,'在发药前拦下潜在风险'],['药品管理与质控',5,'效期、储存条件与追溯体系'],['药学咨询与沟通',4,'把专业信息讲成患者能执行的动作'],['法规与文书',4,'GSP/GMP、处方管理与记录规范']],
+  knowledge:[['药理学与药剂学','作用机制、剂型、代谢与不良反应'],['药物化学与生物化学','结构与性质决定用法与配伍'],['临床治疗学','常见病用药方案与特殊人群调整'],['药事管理法规','执业药师制度、处方与广告规范']],
+  subjects:[['化学',5,'药化、药剂与配伍的基础学科'],['生物',5,'生理、代谢与药理机制'],['语文 / 表达',3,'用药交代与咨询需要清晰表达'],['英语',3,'外文说明书与新药资料'],['数学',3,'剂量换算与血药浓度计算']],
+  majors:['药学','临床药学','药物制剂','药事管理'],
+  outlook:'一致性评价、集采与处方外流重塑行业；临床药学、药物警戒与注册事务方向专业性更强、替代性更低。',
+  income:{entry:[7,14],growth:[14,26],mature:[26,45],top:65,note:'医院、连锁药房与药企差异较大，执业药师资格是零售端硬要求'},
+  radar:[86,90,78,58,74,86]},
+
+ {name:'心理咨询师',aliases:['心理医生','心理治疗师','咨询师','婚姻家庭咨询师'],group:'medical',
+  def:'运用心理学的理论与方法，帮助来访者理解困扰、调整模式并做出改变。',
+  desc:'以 structured 谈话为主要工作方式，需严格区分咨询与精神科诊疗边界。国内行业仍在规范化过程中，前期需要持续投入培训、督导与个人体验，回报周期偏长。',
+  daily:['进行初始访谈、评估与个案概念化','按流派框架开展定期咨询会谈','记录个案、接受督导并做效果评估','必要时转介精神科或危机干预'],
+  skills:[['倾听与共情',5,'听懂未说出口的部分，且不急于给建议'],['个案概念化与评估',5,'把零散叙述组织成可工作的假设'],['干预技术',5,'按流派规范使用提问、澄清与作业'],['边界与危机识别',5,'识别自杀风险、精神病性症状并及时转介']],
+  knowledge:[['心理学基础理论','发展、认知、人格与社会心理学'],['主要咨询流派','精神动力、CBT、人本、家庭系统等'],['精神病理与诊断常识','用于识别边界和转介，而非自行诊断'],['伦理与法律','保密例外、双重关系与记录规范']],
+  subjects:[['生物',4,'神经科学、生理与精神健康基础'],['语文 / 表达',5,'语言是唯一的治疗工具，精度极高'],['政治 / 思政',3,'理解社会规范、伦理与政策环境'],['英语',4,'主流理论、量表与培训资料多为英文'],['数学',3,'心理测量、统计与研究设计']],
+  majors:['心理学','应用心理学','精神医学','社会工作'],
+  outlook:'社会需求上升但付费市场与规范体系仍在成熟期；学校、企业 EAP、司法与医疗系统提供了相对稳定的岗位出口。',
+  income:{entry:[5,12],growth:[12,28],mature:[28,55],top:90,note:'前期培训与督导支出高；成熟期收入高度依赖个案量、口碑与机构分成'},
+  radar:[78,90,96,70,86,92],threshold:'非医学背景需系统培训 + 督导时数，行业证书体系正在调整，需核对最新政策'},
+
+ {name:'牙医',aliases:['口腔医生','牙科医生','正畸医生','口腔科医师'],group:'medical',
+  def:'诊断与治疗口腔及颌面部疾病，兼顾功能恢复与美学修复。',
+  desc:'医学中操作密度最高、与消费属性结合最紧的分支之一：既做龋病、牙周、拔牙等基础治疗，也做种植、正畸、修复等长周期项目。精细手技与沟通能力同样重要。',
+  daily:['口腔检查、影像判读并制定治疗方案','完成充填、根管、拔牙、修复等操作','做正畸 / 种植的阶段性复诊与调整','术前沟通、术后随访与口腔健康宣教'],
+  skills:[['精细临床操作',5,'在狭窄视野内完成高精度手技'],['影像与诊断',5,'从根尖片、CBCT 中判断病变范围'],['方案设计与沟通',5,'解释多种方案的代价与预期，管理期望'],['长期病例管理',4,'正畸、种植以年为单位跟踪']],
+  knowledge:[['口腔解剖与病理','牙体、牙周、颌面结构与常见病变'],['口腔材料与修复学','材料性能、粘接与咬合重建'],['外科学与影像','拔牙、小手术与影像判读'],['医学法规与伦理','知情同意、病历与执业规范']],
+  subjects:[['生物',5,'解剖、生理与组织学基础'],['化学',5,'材料、粘接与药理知识'],['物理',3,'力学、影像与设备原理'],['语文 / 表达',4,'方案沟通与期望管理直接影响满意度'],['艺术 / 设计',3,'前牙美学与微笑设计需要审美判断']],
+  majors:['口腔医学','口腔修复学','口腔正畸学'],
+  outlook:'消费医疗属性强、市场需求持续增长；正畸、种植与儿牙方向溢价明显，但同时营销与合规压力更高。',
+  income:{entry:[10,20],growth:[20,45],mature:[45,90],top:150,note:'民营连锁与自主诊所收入弹性远高于公立体系，个体差异极大'},
+  radar:[92,90,88,66,82,86]},
+
+ {name:'中小学教师',aliases:['老师','教师','语文老师','数学老师','英语老师','班主任','高中教师'],group:'edu',
+  def:'按课程标准完成学科教学，并对学生的理解、习惯与成长提供持续反馈。',
+  desc:'真正的工作远不止讲课：备课、批改、学情诊断、家校沟通、班级管理与教研各占大量时间。衡量成果的既是成绩，也是学生是否建立了可持续的学习方式。',
+  daily:['备课、磨课与教研，设计课堂节奏','授课、提问、组织练习与当堂反馈','批改作业、分析错题并做个别辅导','家校沟通、班级管理与各类非教学事务'],
+  skills:[['教学设计与课堂表达',5,'把知识点拆到学生能跟上的颗粒度'],['学情诊断与反馈',5,'从作业与提问找到真实卡点'],['班级与课堂管理',4,'维持秩序、调动参与、处理冲突'],['命题与评价',4,'设计能真实反映能力的测评']],
+  knowledge:[['任教学科知识体系','需远超教材深度，并熟悉常见误区'],['教育学与心理学','认知发展、动机与差异化教学'],['课程标准与教材体系','课标、考试评价与进阶顺序'],['教育法规与师德','未成年人保护与家校边界']],
+  subjects:[['语文 / 表达',5,'讲解、提问、板书与反馈都依赖语言组织'],['目标学科（数 / 理 / 英等）',5,'主科功底需远超教材要求'],['政治 / 思政',3,'理解教育政策与育人目标'],['历史 / 人文',3,'为通识与人文课程提供背景厚度'],['英语',3,'拓展原版资源与双语教学机会']],
+  majors:['汉语言文学（师范）','数学与应用数学（师范）','英语（师范）','物理学（师范）','历史学（师范）'],
+  outlook:'编制岗位竞争加剧、地区差异大；素质教育、科学教育、心理健康与教育科技方向出现新增量。',
+  income:{entry:[7,14],growth:[14,25],mature:[25,42],top:60,note:'公办体系需综合考量稳定性、寒暑假与职称；培训与国际化学校浮动更大'},
+  radar:[80,88,94,72,82,84]},
+
+ {name:'大学教师 / 科研人员',aliases:['教授','副教授','大学老师','研究员','博导','青椒'],group:'science',
+  def:'在高校或研究机构同时承担知识生产（研究）与知识传递（教学）。',
+  desc:'时间被教学、课题申请、论文、评审与带学生切分。评价高度依赖成果产出，且从博士到独立课题负责人通常还需 6–10 年，属于典型的长周期、高门槛职业。',
+  daily:['阅读文献、设计研究并指导学生实验','撰写论文、基金申请与结题报告','备课授课、答疑与评审答辩','参加学术会议、同行评议与学术服务'],
+  skills:[['研究设计与方法',5,'提出值得做且做得出来的问题'],['学术写作与论证',5,'把结果写成经得起同行检验的论文'],['项目与团队管理',4,'带学生、管经费、协调合作'],['教学与公开表达',4,'把前沿内容讲到学生能理解']],
+  knowledge:[['学科前沿理论','本领域的概念体系与未解问题'],['研究方法与统计','实验、模拟、调查与推断规范'],['学术出版与评价体系','期刊、同行评议与基金机制'],['科研伦理','数据真实性、署名与利益冲突']],
+  subjects:[['数学',5,'建模、统计与定量研究的通用语言'],['目标理科 / 专业主科',5,'按方向把物理、化学、生物或专业课程学深'],['英语',5,'论文写作与国际交流的主要语言'],['语文 / 表达',4,'论文、基金本子与授课都靠清晰写作'],['计算机 / 信息技术',4,'数据分析与模拟已是研究标配']],
+  majors:['视研究方向而定，通常为本学科本科 → 硕士 → 博士一贯路径'],
+  outlook:'学术岗竞争最激烈、培养周期最长；企业研究院、新型研发机构与成果转化提供了更宽的出口。',
+  income:{entry:[10,20],growth:[20,38],mature:[38,70],top:120,note:'高校基础薪酬不高，人才计划、课题与成果转化可能带来显著额外收入'},
+  threshold:'博士为起点，多数高校要求博士后经历与代表性成果',
+  stages:[['博士训练期','0–5 年','建立研究方法与方向，产出首批成果','完成博士学位'],['独立初期','5–12 年','博士后 / 助理教授，争取首个主持课题','获得稳定教职或副高职称'],['成熟期','12–25 年','带团队、拿重点课题、建立学术影响','教授、课题组长或实验室负责人'],['引领期','25 年以上','学科建设、平台与学术共同体影响','学科带头人、讲席教授']],
+  radar:[90,96,80,92,84,98],span:'约 40–45 年，起步最晚但成果影响力延续最久'},
+
+ {name:'幼儿教师',aliases:['幼师','幼儿园老师','早教老师','保育员'],group:'edu',
+  def:'通过游戏、生活照料与活动设计，支持 3–6 岁儿童的身心与社会性发展。',
+  desc:'重心不是知识讲授，而是安全照护、习惯养成、情绪引导与游戏化启蒙。需要同时具备体力、耐心和观察力，与家长的沟通能力几乎和带班能力同等重要。',
+  daily:['组织一日生活、户外与游戏活动','观察记录儿童行为与发展表现','处理情绪、冲突与安全工作','做环境创设、家长沟通与园所教研'],
+  skills:[['活动设计与组织',5,'把发展目标藏进孩子愿意参与的游戏里'],['观察与发展评估',5,'从行为识别发展节奏与异常信号'],['安全照护与应急',5,'该年龄段风险防范是第一位'],['家长沟通',5,'把专业判断讲成家长能配合的动作']],
+  knowledge:[['学前儿童发展心理学','认知、语言、情绪与社会性发展规律'],['学前教育学','游戏理论、课程与一日生活组织'],['卫生保健与急救','常见传染病、意外伤害与营养'],['教育法规','未成年人保护与幼儿园工作规程']],
+  subjects:[['语文 / 表达',5,'讲故事、引导与家长沟通全天使用'],['艺术 / 设计',4,'手工、环创、音乐与律动是日常教具'],['体育 / 生理',4,'理解动作发展并支撑全天体力工作'],['生物',3,'儿童生理与卫生保健基础'],['音乐 / 艺术实践',4,'弹唱、律动与节奏活动（师范技能课重点）']],
+  path:{hs:'文化课与艺术技能并重，弹唱、舞蹈、手工与普通话需长期练习',uni:'学前教育 / 早期教育 / 艺术教育；师范技能课与幼儿园实习比理论课更直接影响入行',adv:'教师资格证、普通话等级与育婴 / 保育相关证书；多去不同类型园所见习',life:'从带班教师到教研组长、年级组长，或转向园所管理、早教课程研发'},
+  majors:['学前教育','早期教育','儿童发展与教育心理学','艺术教育'],
+  outlook:'普惠园扩容与托育一体化带来岗位量，但薪酬与流动性仍是行业痛点；高端园、教研与园所管理是主要上升方向。',
+  income:{entry:[5,10],growth:[10,18],mature:[18,32],top:48,note:'地区与园所性质差异明显，公办编制岗位稳定性更高'},
+  radar:[78,76,92,80,88,78],threshold:'大专及以上 + 教师资格证，艺术技能常为面试考察项'},
+
+ {name:'会计师 / 审计师',aliases:['会计','审计','cpa','财务','财会','税务专员','四大'],group:'finlaw',
+  def:'按准则记录、核算与鉴证经济业务，输出可审计、可追责的财务信息。',
+  desc:'企业会计偏日常核算、报表与管理支持；事务所审计偏独立鉴证与底稿。两者共同点是规则密集、周期性强（年审与年报季），且 CPA 等资格几乎决定上升速度。',
+  daily:['审核原始凭证、记账与对账','编制报表、合并与附注披露','执行审计程序、编制工作底稿','做税务申报、预算分析与内控建议'],
+  skills:[['准则应用与职业判断',5,'在规则内做出经得起复核的处理'],['财务核算与报表',5,'从凭证到三大报表的完整闭环'],['数据分析与异常识别',4,'从科目余额与趋势里发现问题'],['底稿与报告写作',4,'结论必须可追溯、可复核']],
+  knowledge:[['会计准则与审计准则','确认、计量、列报与审计证据'],['税法与公司法','常见税种、发票与合规边界'],['财务管理与成本','预算、成本结构与经营分析'],['内控与风险管理','流程设计、职责分离与舞弊识别']],
+  subjects:[['数学',5,'核算、统计与建模需要扎实数理基础'],['政治 / 思政',4,'理解财税制度、法规与监管逻辑'],['语文 / 表达',4,'报告、说明与沟通要求准确严谨'],['英语',4,'国际准则、外企与跨境业务'],['计算机 / 信息技术',3,'ERP、Excel/SQL 与财务自动化']],
+  majors:['会计学','审计学','财务管理','财政学','税收学'],
+  outlook:'基础核算被财务共享与自动化快速替代，管理会计、税务筹划、内控与数据化财务分析价值上升。',
+  income:{entry:[7,15],growth:[15,32],mature:[32,65],top:100,note:'事务所前期加班强度大、单位时薪偏低；CPA 与合伙人路径带来后期跃升'},
+  radar:[88,90,78,58,86,86]},
+
+ {name:'金融分析师',aliases:['投资经理','证券分析师','研究员（金融）','基金经理','投行分析师','行研'],group:'finlaw',
+  def:'研究行业、公司与资产价格，为投资或融资决策提供可辩护的判断。',
+  desc:'在信息不完整、市场反向波动的条件下做出判断并承担被证伪的压力。工作混合了财报建模、产业链调研、估值与观点输出，结果反馈快且公开。',
+  daily:['读财报、公告与行业数据，维护估值模型','做公司调研、专家访谈与产业链验证','撰写研究报告或投资备忘录','跟踪组合表现、复盘假设并修正观点'],
+  skills:[['财务建模与估值',5,'把假设变成可推演、可检验的数字'],['行业研究与信息验证',5,'区分事实、观点与市场情绪'],['逻辑论证与写作',5,'结论必须能被质疑、能被复核'],['风险与组合思维',4,'判断错了之后如何控制损失']],
+  knowledge:[['会计与财务分析','报表质量、科目操纵与现金流'],['估值与公司金融','DCF、可比、资本成本与资本结构'],['宏观与金融市场','利率、汇率、流动性与市场机制'],['监管与合规','信息披露、内幕交易与适当性管理']],
+  subjects:[['数学',5,'建模、概率与统计是日常工具'],['英语',5,'外资金融机构与海外资料以英文为主'],['政治 / 经济',5,'宏观政策与市场制度直接决定资产价格'],['语文 / 表达',4,'报告与路演要求高密度、高精度表达'],['历史 / 人文',3,'理解周期与市场行为']],
+  majors:['金融学','经济学','会计学','数学与应用数学','统计学'],
+  outlook:'头部化明显、门槛持续抬高；量化、产业深度研究与跨境配置方向更稳，纯信息搬运型研究岗被工具压缩。',
+  income:{entry:[12,25],growth:[25,60],mature:[60,150],top:300,note:'奖金与业绩强挂钩，年度波动极大；买方与卖方、内资与外资差异巨大'},
+  radar:[90,90,86,74,92,90],threshold:'本科起步，头部机构普遍要求名校硕士 + 高质量实习'},
+
+ {name:'律师',aliases:['法律顾问','法务','诉讼律师','非诉律师','大律师','律师助理'],group:'finlaw',
+  def:'运用法律规则为当事人提供意见、文书与代理，维护其合法权益。',
+  desc:'诉讼与非诉几乎是两种工作：前者围绕证据、庭审与争议解决，后者围绕交易结构、尽调与文件。共同点是法条检索精度、文书严谨度与对客户商业目标的理解。',
+  daily:['检索法条、判例与监管口径','起草合同、法律意见与诉讼文书','会见当事人、尽调、谈判与出庭','跟进案件进度、风险提示与客户维护'],
+  skills:[['法律检索与解释',5,'找对依据比记得多更重要'],['法律文书写作',5,'一字之差可能改变责任边界'],['逻辑论证与辩论',5,'在对抗情境下组织证据与理由'],['客户沟通与谈判',4,'在情绪与利益之间推进方案']],
+  knowledge:[['部门法体系','民法、刑法、商法、行政法及程序法'],['司法解释与裁判规则','条文如何在实务中被适用'],['商业与财务常识','不懂交易就看不出风险点'],['执业规范与伦理','利益冲突、保密与收费规则']],
+  subjects:[['语文 / 表达',5,'写作、辩论与口头表达是全部核心工具'],['政治 / 思政',5,'制度、法理与公共规则的知识基础'],['历史 / 人文',4,'理解制度演进与社会语境'],['英语',4,'涉外、跨境并购与国际仲裁方向必备'],['数学',3,'逻辑训练、赔偿计算与结构化分析']],
+  path:{hs:'语文、政治、历史重点投入，训练长文本阅读与条理化论证',uni:'法学本科（五院四系等院校平台与实习资源差异明显），核心在民法、刑法、商法与诉讼法',adv:'法律职业资格考试是硬门槛，加一年律所实习方可执业；模拟法庭、法律援助与实习很关键',life:'前几年主动积累专业方向与案源，中期在诉讼 / 非诉之间形成标签，长期靠口碑与专业壁垒'},
+  majors:['法学','知识产权','国际经济法','民商法学'],
+  outlook:'前端案源与人脉决定收入上限；合规、知识产权、数据合规、跨境与争议解决是较明确的结构性增长方向。',
+  income:{entry:[6,15],growth:[15,40],mature:[40,100],top:250,note:'前 3–5 年收入偏低且分化极大，授薪律师与合伙人模式差异巨大'},
+  threshold:'法学本科 + 法律职业资格考试 + 一年实习执业',
+  stages:[['准入与助理期','0–3 年','通过法考、完成实习，做检索与基础文书','取得律师执业证'],['独立执业期','3–8 年','独立承办案件 / 项目，积累专业方向','形成稳定案源或专业标签'],['资深期','8–18 年','复杂争议与交易主办、带团队','晋升合伙人或资深顾问'],['引领期','18 年以上','机构管理、行业规则参与，或转向企业法总','律所管理、行业权威或法务高管']],
+  radar:[90,92,92,68,88,88]},
+
+ {name:'精算师',aliases:['actuary','保险精算','风险评估师'],group:'finlaw',
+  def:'用概率与统计模型量化未来不确定事件，为保险定价、准备金与风险决策提供依据。',
+  desc:'典型"高门槛、低波动、强考试"职业：需要在工作之余逐科通过系列精算考试，用数年时间换取资质，之后在保险、再保、咨询与监管领域形成稳定专业壁垒。',
+  daily:['清洗保单与赔付数据，建立发生率假设','搭建定价、准备金与现金流模型','做经验分析、压力测试与偿付能力评估','撰写报告，向监管与管理层解释结论'],
+  skills:[['概率统计与建模',5,'对尾部风险与长期假设保持敏感'],['编程与数据处理',5,'模型体量大，工程能力不可缺'],['考试体系与准则',5,'资格本身构成职业壁垒'],['风险解释与沟通',4,'把模型结论讲给非技术决策者']],
+  knowledge:[['概率论与数理统计','损失分布、生存模型与随机过程'],['保险与金融学','产品结构、利率与资产负债匹配'],['会计准则与监管','准备金评估、偿付能力监管体系'],['计算机与数据工具','R / Python / SQL 与精算软件']],
+  subjects:[['数学',5,'概率、统计与建模是绝对核心学科'],['英语',5,'国际精算考试教材与资料多为英文'],['计算机 / 信息技术',4,'大规模数据处理与模型实现'],['政治 / 经济',3,'理解利率、监管与宏观经济'],['语文 / 表达',3,'报告与结论陈述需要清晰']],
+  majors:['精算学','统计学','数学与应用数学','保险学','金融工程'],
+  outlook:'岗位数量不大但替代性极低，资格考试构成天然护城河；风险管理、健康险与养老金融方向需求上升。',
+  income:{entry:[12,22],growth:[22,45],mature:[45,90],top:140,note:'考试通过进度直接对应薪酬档位，持证后跃升明显'},
+  radar:[94,94,72,70,78,94],threshold:'本科 + 系列精算资格考试（通常需 3–7 年在职完成）'},
+
+ {name:'建筑师',aliases:['建筑设计师','注册建筑师','方案设计师','建筑学'],group:'eng',
+  def:'在功能、安全、法规与预算约束下，设计人与空间相处的方式。',
+  desc:'从概念方案到施工图、从模型推敲到现场配合，周期常以年计。既要审美与空间想象力，也要能扛住规范、甲方、造价与工期的反复拉扯，是艺术性与工程性并重的职业。',
+  daily:['做场地与任务书分析，推敲概念方案','建模、出图、做日照 / 疏散等规范校核','与结构、机电及甲方协调方案','配合施工、现场巡图与材料定样'],
+  skills:[['空间与造型设计',5,'把功能、流线与体验组织成空间'],['规范与构造',5,'消防、无障碍、节能等强制条文不可越线'],['BIM / CAD 与表现',5,'从草模到施工图的完整工具链'],['多方协调与提案',4,'让甲方、顾问与施工方在同一张图上工作']],
+  knowledge:[['建筑历史与理论','空间原型、风格谱系与评价参照'],['建筑技术与构造','材料、节点、结构与设备协同'],['法规与标准','规划条件、防火规范与报审流程'],['项目管理与造价','进度、成本与设计变更控制']],
+  subjects:[['物理',5,'力学、光学与热工是构造与规范的底层'],['数学',5,'几何、空间与结构计算能力'],['艺术 / 设计',5,'造型、色彩与构图需要长期训练'],['语文 / 表达',4,'方案汇报与文本说明决定能否被采纳'],['历史 / 人文',3,'理解城市、文脉与生活方式']],
+  majors:['建筑学','城乡规划','风景园林','建筑环境与能源应用工程'],
+  outlook:'与地产与基建投资周期强相关，增量建设放缓；城市更新、既有建筑改造、绿色低碳与乡村建设成为新增长点。',
+  income:{entry:[8,16],growth:[16,32],mature:[32,65],top:110,note:'一级注册建筑师资格是中后期关键，方案主创与事务所合伙人弹性更大'},
+  threshold:'本科 5 年制为主，一级注册建筑师需多年实践后考取',
+  radar:[88,86,88,92,82,82]},
+
+ {name:'土木工程师',aliases:['结构工程师','施工员','岩土工程师','造价工程师','土建工程师'],group:'eng',
+  def:'负责建筑与基础设施的结构安全、施工方案与工程落地。',
+  desc:'设计院偏计算与出图，施工单位偏现场组织与进度质量，甲方偏全过程管理。共同点是责任终身制意识：图纸上的每个数字都对应真实的结构与人的安全。',
+  daily:['做荷载、结构与地基计算并出施工图','编制施工方案、技术交底与进度计划','现场巡检、验收与处理设计变更','协调监理、分包与材料进场'],
+  skills:[['结构计算与规范',5,'按强制条文完成安全、经济的设计'],['工程制图与 BIM',5,'图纸是全部交付与责任的载体'],['现场问题处置',4,'图纸与现场不符时快速给出可行方案'],['进度与成本管控',4,'工期、质量、成本三角约束']],
+  knowledge:[['力学与结构理论','材料力学、结构力学与土力学'],['工程材料与施工工艺','混凝土、钢结构与工法可实现性'],['国家标准与法规','设计规范、验收标准与安全责任'],['项目管理与合同','招投标、计量与变更索赔']],
+  subjects:[['物理',5,'力学是全部结构判断的来源'],['数学',5,'计算、建模与统计的日常工具'],['计算机 / 信息技术',4,'结构分析软件、BIM 与数值模拟'],['化学',3,'材料耐久、腐蚀与外加剂'],['语文 / 表达',3,'方案、交底与函件需要清晰书面表达']],
+  majors:['土木工程','工程力学','道路桥梁与渡河工程','工程管理','工程造价'],
+  outlook:'传统新建增量放缓，但既有结构检测加固、市政更新、新能源基建与智能建造仍有稳定需求；驻场与出差较常见。',
+  income:{entry:[8,16],growth:[16,32],mature:[32,60],top:95,note:'驻场补贴与项目奖金占比不低；注册结构 / 岩土 / 造价证书显著提升议价能力'},
+  radar:[92,90,76,62,84,78]},
+
+ {name:'机械工程师',aliases:['机械设计','结构工程师（机械）','工艺工程师','机电工程师','制造工程师'],group:'eng',
+  def:'设计、分析与优化机械产品及其制造工艺，让图纸能稳定变成合格零件。',
+  desc:'横跨设计、仿真、工艺与产线：既要保证功能与强度，也要考虑公差、材料、模具与量产成本。制造业升级让机电一体、机器人与自动化方向占比持续提高。',
+  daily:['做需求拆解、三维建模与工程图输出','做强度 / 运动 / 热仿真并迭代设计','制定加工与装配工艺、处理试制问题','跟进供应商、产线调试与质量改善'],
+  skills:[['三维建模与工程图',5,'公差、配合与可制造性必须体现在图纸上'],['力学与仿真分析',5,'在设计阶段预判失效与变形'],['工艺与材料选型',4,'从"能做出来"到"能稳定量产"'],['问题定位与实验验证',4,'用测试数据而非直觉收敛问题']],
+  knowledge:[['机械原理与材料力学','运动、受力、疲劳与失效机理'],['制造工艺与材料','切削、成型、热处理与表面处理'],['公差与标准化','互换性、GD&T 与国标体系'],['控制与机电基础','传感器、驱动与自动化产线协同']],
+  subjects:[['物理',5,'力学、热学与运动学的直接来源'],['数学',5,'几何、微积分与数值计算'],['计算机 / 信息技术',4,'CAD/CAE、数控与仿真工具'],['化学',3,'材料、热处理与腐蚀'],['英语',3,'外文标准、设备手册与软件文档']],
+  majors:['机械设计制造及其自动化','机械工程','材料成型及控制工程','车辆工程','机器人工程'],
+  outlook:'高端装备、新能源车、机器人与半导体设备带动结构性需求；纯绘图与重复工艺岗被自动化工具压缩。',
+  income:{entry:[8,17],growth:[17,34],mature:[34,65],top:100,note:'行业差异大，新能源、半导体设备与机器人方向高于传统通用机械'},
+  radar:[92,88,74,74,78,82]},
+
+ {name:'电气工程师',aliases:['电子工程师','自动化工程师','电力工程师','硬件工程师','电路工程师'],group:'eng',
+  def:'设计、调试与维护电能传输、电路系统或自动控制设备。',
+  desc:'方向跨度很大：强电偏电网、供配电与电机，弱电偏电路、嵌入式与控制。共同点是必须尊重物理定律与安全规范，调试过程常常需要反复测量与排查。',
+  daily:['做负荷计算、方案设计与原理图绘制','元器件选型、PCB / 柜体设计与仿真','现场调试、故障排查与参数整定','编写技术文档并 follow 安全与验收规范'],
+  skills:[['电路分析与设计',5,'从原理到实现都能闭环'],['测试与仪器使用',5,'示波器、万用表与逻辑分析定位问题'],['控制系统与编程',4,'PLC、嵌入式、PID 与自动化逻辑'],['规范与安全',5,'电气事故代价高，标准不可妥协']],
+  knowledge:[['电路与电磁场','模拟 / 数字电路、电机与电力电子'],['控制理论','反馈、稳定性与系统响应'],['电力系统与供配电','负荷、短路、保护与接地'],['标准与安全规程','电气规范、防爆与验收要求']],
+  subjects:[['物理',5,'电磁学与电路是最直接的前置学科'],['数学',5,'微分方程、复数与信号分析'],['计算机 / 信息技术',4,'嵌入式、仿真与自动化编程'],['英语',3,'芯片手册与仪器文档多为英文'],['语文 / 表达',3,'技术文档与验收资料']],
+  majors:['电气工程及其自动化','电子信息工程','自动化','通信工程','测控技术与仪器'],
+  outlook:'新型电力系统、储能、新能源车、工业自动化与芯片硬件方向需求明确，属于制造业升级的直接受益岗位。',
+  income:{entry:[9,18],growth:[18,36],mature:[36,70],top:105,note:'新能源、电力电子与芯片方向溢价明显；注册电气工程师资格价值高'},
+  radar:[92,90,74,76,80,86]},
+
+ {name:'平面 / 视觉设计师',aliases:['平面设计','视觉设计师','品牌设计师','美工','包装设计师'],group:'creative',
+  def:'用图形、文字、色彩与版式，为品牌或信息建立清晰且有辨识度的视觉表达。',
+  desc:'产出覆盖 Logo、VI、海报、包装、电商与社媒物料。难点不在于把图做漂亮，而在于在极短时间内理解商业目标，并让设计在真实媒介上依然成立。',
+  daily:['理解 brief，做调研与情绪板','探索方向、排版与图形，输出多版方案','按反馈迭代并做延展物料与规范','对接印刷 / 制作，检查输出文件与落地效果'],
+  skills:[['版式与字体排印',5,'信息层级决定读者先看什么'],['图形与色彩系统',5,'建立可延展、可复用的视觉语言'],['设计软件与交付',5,'从源文件到印刷 / 线上规格都不能出错'],['需求转译与提案',4,'把"高级一点"翻译成可执行判断']],
+  knowledge:[['设计史与视觉理论','风格参照与审美判断的依据'],['品牌与传播基础','定位、受众与渠道语境'],['印刷与制作工艺','材质、色彩模式、出血与后道'],['版权与商用规范','字体授权、素材与委托合同']],
+  subjects:[['艺术 / 设计',5,'造型、色彩与构成需要长期训练'],['语文 / 表达',5,'文案理解与提案陈述是日常'],['历史 / 人文',4,'提供题材与文化语境'],['计算机 / 信息技术',4,'工具链与新兴生成式工作流'],['英语',3,'国际作品与素材平台']],
+  majors:['视觉传达设计','平面设计','数字媒体艺术','广告学','包装设计'],
+  outlook:'基础排版与电商修图岗被模板与 AI 大幅压缩，品牌系统、策略型设计与动态视觉方向价值上升。',
+  income:{entry:[6,13],growth:[13,26],mature:[26,50],top:85,note:'freelance 与项目制占比高，个人品牌与客户资源决定上限'},
+  radar:[88,70,82,90,84,84]},
+
+ {name:'动画师 / 原画师',aliases:['动画师','原画师','动画设计师','原画','分镜师','三维动画','建模师','动效设计师'],group:'creative',
+  def:'让静态角色与场景按时间轴运动起来，用动作、节奏与表演传达情绪。',
+  desc:'二维偏手绘与原画，三维偏绑定、K 动画与灯光渲染，游戏与影视流程差异明显。这是典型的"作品即简历"行业，同时需要承受密集返修与长周期项目。',
+  daily:['根据分镜与导演意图做动作设计','画关键帧 / 中间帧，或做绑定与 K 帧','与模型、绑定、特效、后期对接','按导演反馈反复修改并按时交付镜头'],
+  skills:[['运动规律与表演',5,'重量、惯性、预备与跟随决定动作是否可信'],['造型与手绘 / 软件',5,'二维需绘画功底，三维需工具熟练度'],['节奏与时间感',5,'帧数分配就是表演的呼吸'],['流程协作与抗压修改',4,'镜头在管线中流转，反馈密集']],
+  knowledge:[['动画原理与解剖','运动规律、人体结构与透视'],['影视语言与分镜','镜头、剪辑与叙事节奏'],['制作管线','从概念到成片的各环节约束'],['版权与项目规范','委托制作、署名与素材使用']],
+  subjects:[['艺术 / 设计',5,'素描、速写、色彩与人体是长期基本功'],['语文 / 表达',4,'理解剧本、角色与叙事意图'],['计算机 / 信息技术',4,'三维软件、渲染与流程工具'],['历史 / 人文',3,'题材考据与风格参照'],['体育 / 生理',3,'理解动作与身体力学']],
+  majors:['动画','数字媒体艺术','戏剧影视美术设计','漫画','视觉传达设计'],
+  outlook:'国漫、游戏与短剧带动需求，但项目制波动大；AI 辅助中间帧正在改变基础产能结构，表演与导演能力更稀缺。',
+  income:{entry:[6,14],growth:[14,30],mature:[30,60],top:100,note:'按镜头 / 项目计酬常见，主创、导演与自建 IP 收入弹性远高于执行岗'},
+  radar:[90,72,76,94,90,88]},
+
+ {name:'影视编导',aliases:['导演','编剧','编导','制片','影视导演','纪录片导演'],group:'creative',
+  def:'统筹一部影像作品从创意、剧本到拍摄与后期的完整表达。',
+  desc:'既是创作者也是组织者：要把文字变成可执行的分镜与日程，在现场不断做取舍，还要在预算、时间与天气等现实约束里保住作品的核心表达。',
+  daily:['开发选题、写剧本或脚本、做分镜与勘景','组织试镜、排期与拍摄现场调度','指导表演、机位与灯光，把控当日进度','跟剪辑、调色、声音与成片审改'],
+  skills:[['叙事与剧本结构',5,'先有故事，镜头才有意义'],['现场调度与决策',5,'时间压力下持续做出可接受的选择'],['视听语言',5,'用镜头、声音与剪辑而非台词表达'],['资源与预算管理',4,'把创意落到能拍完的范围内']],
+  knowledge:[['电影史与视听理论','镜头语法、流派与作者表达'],['制作流程与分工','制片、摄影、美术、录音、后期各司其职'],['版权与审查规范','授权、合同与播映合规'],['受众与发行','渠道、平台与宣发逻辑']],
+  subjects:[['语文 / 表达',5,'写作、剧本与沟通是核心生产力'],['艺术 / 设计',4,'构图、色彩与空间审美'],['历史 / 人文',4,'题材厚度、人物与社会语境'],['英语',3,'国际影展、合拍与资料'],['政治 / 思政',3,'理解内容规范与社会责任']],
+  majors:['戏剧影视导演','戏剧影视文学','广播电视编导','摄影','影视摄影与制作'],
+  outlook:'长视频收缩、短剧与品牌内容扩张，项目制与自由职业成为常态；能兼顾内容判断与商业交付的编导更稳。',
+  income:{entry:[5,12],growth:[12,30],mature:[30,70],top:150,note:'收入高度项目化、波动极大，成名导演与执行编导不在同一量级'},
+  radar:[86,78,92,96,92,86]},
+
+ {name:'内容创作者 / 作家',aliases:['作家','自媒体','博主','公众号作者','文案','网文作者','自由撰稿人'],group:'creative',
+  def:'持续产出文字、影像或音频内容，在特定主题上与受众建立长期关系。',
+  desc:'门槛低但存活难：真正的门槛不是会写，而是能长期稳定地找到值得写的角度，并理解分发平台与受众反馈。收入结构通常由稿费、平台分成、商业合作与版权构成。',
+  daily:['选题调研、资料核对与角度确定','写作 / 拍摄 / 录制并完成编辑','发布、看数据、回复读者与社群维护','谈商业合作、梳理版权与长期内容规划'],
+  skills:[['选题与洞察',5,'写什么比怎么写更决定传播'],['写作与编辑',5,'把杂乱信息整理成读者愿意读完的结构'],['事实核查',5,'一次失实足以摧毁长期信任'],['平台与运营',4,'理解分发机制与受众反馈']],
+  knowledge:[['所写领域知识','垂直领域的专业纵深是护城河'],['传播与受众心理','标题、结构与阅读场景'],['版权与广告法规','授权、引用、软广与合规'],['基础商业与合同','报价、结算与知识产权归属']],
+  subjects:[['语文 / 表达',5,'阅读与写作量是所有能力的来源'],['历史 / 人文',4,'为内容提供背景与判断力'],['政治 / 思政',3,'了解社会语境与内容规范'],['英语',4,'获取一手资料与跨文化题材'],['计算机 / 信息技术',3,'排版、分发工具与基础数据']],
+  path:{hs:'大量阅读与持续写作是最有效的投入，语文与历史提供表达与题材厚度',uni:'专业不限，中文 / 新闻 / 历史 / 任一垂直领域专业都可成为内容纵深来源',adv:'尽早开始公开输出并积累作品档案；学习基础数据、排版与版权常识',life:'把单一平台能力沉淀为可迁移的选题、写作与个人视角，逐步拓展出版、课程或版权合作'},
+  majors:['汉语言文学','新闻学','传播学','历史学','不限专业'],
+  outlook:'AI 大幅降低了通用内容生产成本，个人视角、专业纵深、真实经历与稳定人格反而成为差异化核心。',
+  income:{entry:[3,10],growth:[10,30],mature:[30,80],top:200,note:'长尾分布极端，头部与中位差距可达数十倍；建议把它作为渐进式副业起步'},
+  radar:[82,76,86,96,88,92],threshold:'无学历门槛，作品与持续产出记录即全部凭证'},
+
+ {name:'市场营销经理',aliases:['市场经理','品牌经理','增长负责人','营销策划','cmo'],group:'biz',
+  def:'找到产品与目标人群之间的有效连接，用可衡量的方式推动增长。',
+  desc:'从用户洞察、定位与内容，到渠道投放、活动与转化数据，最终对增长与预算效率负责。这个岗位的特殊之处在于：创意与数字必须同时成立。',
+  daily:['分析市场、竞品与用户数据，确定阶段目标','策划 campaign、内容与渠道组合','协调设计、销售、外部代理商推进落地','复盘 ROI / 转化率并调整下一轮预算'],
+  skills:[['用户与数据洞察',5,'从数据里找到真正可行动的差异'],['策略与预算分配',5,'有限资源下判断该押哪条渠道'],['内容与提案',4,'把策略讲成能执行、能说服的方案'],['跨部门与供应商管理',4,'多数执行依赖外部与外部团队']],
+  knowledge:[['营销与消费者行为','定位、心智、决策路径与品牌资产'],['财务与单位经济模型','CAC、LTV、毛利与投放回报'],['渠道与平台规则','搜索、社交、电商与线下各自机制'],['广告法与数据合规','宣称边界、隐私与素材授权']],
+  subjects:[['语文 / 表达',5,'文案、提案与沟通是主战场'],['数学',4,'转化率、预算与归因分析'],['政治 / 经济',3,'理解消费环境与市场制度'],['英语',4,'国际品牌与跨境营销'],['计算机 / 信息技术',3,'数据看板、投放平台与自动化工具']],
+  majors:['市场营销','工商管理','广告学','传播学','经济学'],
+  outlook:'传统品牌与媒介投放岗收缩，增长、私域、内容电商与数据驱动营销能力需求上升。',
+  income:{entry:[8,16],growth:[16,35],mature:[35,75],top:130,note:'与业务规模、行业毛利强相关，快消、互联网与美妆行业弹性较大'},
+  radar:[76,72,94,84,88,84]},
+
+ {name:'人力资源经理',aliases:['hr','hrbp','招聘经理','人事','组织发展','薪酬绩效'],group:'biz',
+  def:'围绕组织的人才获取、培养、评价与激励，让合适的人在合适的位置上产出。',
+  desc:'招聘只是其中一块：还需要处理绩效、薪酬、劳动关系、组织设计与文化。难点在于同时站在公司经营与员工权益两侧，判断常没有标准答案。',
+  daily:['与业务方对齐编制与岗位画像','组织招聘、面试评估与录用谈判','设计绩效、薪酬与培训发展方案','处理员工关系、合规风险与组织数据'],
+  skills:[['识人与结构化面试',5,'减少主观印象带来的误判'],['组织诊断与方案设计',4,'把业务问题翻译成组织问题'],['沟通与冲突处理',5,'大量场景涉及利益与情绪'],['劳动法与合规',4,'程序错误可能直接引发争议']],
+  knowledge:[['人力资源管理各模块','招聘、绩效、薪酬、培训与员工关系'],['劳动法与社保政策','合同、解除、工时与争议处理'],['组织行为与心理学','动机、团队与领导力'],['业务与财务常识','人效、编制成本与业务节奏']],
+  subjects:[['语文 / 表达',5,'访谈、谈判、制度文本与沟通'],['政治 / 思政',4,'劳动法、政策与组织制度基础'],['数学',3,'薪酬测算、人效与数据分析'],['英语',4,'外企与跨国组织场景'],['历史 / 人文',3,'理解组织与人的复杂性']],
+  majors:['人力资源管理','工商管理','心理学','劳动与社会保障','法学'],
+  outlook:'事务型 HR 被系统替代明显，HRBP、组织发展、人才盘点与合规方向专业价值上升。',
+  income:{entry:[7,15],growth:[15,30],mature:[30,60],top:100,note:'行业与公司规模差异明显，外企与大型集团 HRBP 溢价较高'},
+  radar:[74,80,96,66,86,80]},
+
+ {name:'供应链管理者',aliases:['供应链','采购经理','物流经理','计划经理','运营管理','仓储管理'],group:'biz',
+  def:'协调采购、生产、库存与配送，让正确的货在正确时间以合理成本到达。',
+  desc:'表面是流程，本质是不断在成本、交付与风险之间做平衡。疫情与地缘变化之后，韧性、多源替代与库存策略的重要性显著上升。',
+  daily:['做需求预测、产能与库存计划','供应商寻源、比价、谈判与绩效评估','跟踪订单、物流异常与交付达成','优化成本结构、周转天数与风险预案'],
+  skills:[['需求预测与计划',5,'在不确定中把库存压到合理区间'],['数据分析与成本建模',5,'总成本而非单价才是决策依据'],['谈判与供应商管理',5,'长期关系与议价能力同样重要'],['异常与风险处置',4,'断供、延迟与品质问题需即时响应']],
+  knowledge:[['运筹与统计学','预测、库存模型与网络优化'],['采购与品类知识','原材料、工艺与市场行情'],['国际贸易与合同','关务、Incoterms 与付款条款'],['质量与合规体系','验厂、认证与追溯要求']],
+  subjects:[['数学',5,'预测、优化与统计分析是核心工具'],['英语',4,'跨境采购与国际物流常用'],['语文 / 表达',4,'谈判、合同条款与跨部门协调'],['地理',3,'理解产区、运距与时区网络'],['计算机 / 信息技术',4,'ERP、WMS 与数据看板是日常系统']],
+  majors:['供应链管理','物流管理','工业工程','管理科学与工程','国际经济与贸易'],
+  outlook:'制造业出海、跨境电商与韧性供应链建设带来持续需求；掌握数据工具与全球网络视角者更具优势。',
+  income:{entry:[8,16],growth:[16,34],mature:[34,70],top:110,note:'制造业、零售业与跨境行业差异较大，外派与海外岗位常有额外补贴'},
+  radar:[82,80,92,70,86,80]},
+
+ {name:'公务员',aliases:['选调生','事业编','政府工作人员','基层干部','税务公务员','海关'],group:'public',
+  def:'在党政机关或事业单位中承担公共事务管理、政策执行与公共服务。',
+  desc:'工作内容因系统差异极大，共性是程序性强、书面表达密集、反馈周期长。职业吸引力主要来自稳定性与长期保障，而非现金薪酬的弹性。',
+  daily:['办理业务、审核材料与接待群众','起草公文、简报、调研报告与会议材料','落实政策、组织协调与专项检查','参加学习培训、考核与各类临时任务'],
+  skills:[['公文写作',5,'格式、措辞与逻辑都有明确规范'],['政策理解与执行',5,'按程序办事并能解释依据'],['沟通协调与群众工作',5,'面对具体的人解决具体的事'],['调研与信息整理',4,'把零散情况整理成可用于决策的材料']],
+  knowledge:[['法律法规与行政制度','权责边界、程序与行政复议'],['政策与国情','宏观政策方向与基层现实约束'],['公文与档案管理','行文规则、保密与归档'],['基础经济与社会常识','理解政策作用于谁、如何影响']],
+  subjects:[['语文 / 表达',5,'申论、公文与面试都直接考察写作与表达'],['政治 / 思政',5,'制度、政策与公共事务的知识主线'],['历史 / 人文',4,'提供治理语境与分析深度'],['数学',3,'行测数量关系与资料分析'],['地理',3,'理解区域差异与资源议题']],
+  majors:['法学','汉语言文学','行政管理','经济学','计算机科学与技术'],
+  outlook:'报考热度长期居高、竞争加剧；基层治理、数字化政务、数据监管与涉外事务方向能力要求持续提高。',
+  income:{entry:[7,13],growth:[13,22],mature:[22,36],top:48,note:'地区与系统差异大，需综合考量保障、稳定性与住房等隐性福利'},
+  radar:[74,84,90,58,82,78],threshold:'本科及以上 + 公开招录考试（笔试、面试、体检、考察）'},
+
+ {name:'记者 / 编辑',aliases:['记者','新闻记者','编辑','新媒体编辑','采编','主编'],group:'public',
+  def:'发现、核实并组织有公共价值的信息，把它准确而清晰地交付给读者。',
+  desc:'从线索判断、采访、核实到成稿与编辑，最核心的职业能力是"对事实的克制"。媒介形态变了，但对信源、证据与边界的要求没有变。',
+  daily:['判断线索价值，做背景资料检索','采访、现场走访并交叉核实信息','写稿、编辑、标题与事实核查','跟进反馈、更新报道与选题会'],
+  skills:[['新闻敏感与选题',5,'判断什么值得占用公众注意力'],['采访与事实核查',5,'多方求证，区分事实、推断与观点'],['写作与编辑',5,'在有限篇幅内准确、克制、有层次'],['多媒体与分发',4,'文字、图片、视频与平台规则']],
+  knowledge:[['新闻理论与伦理','客观性、信源保护与利益冲突'],['法律与政策常识','名誉权、隐私、信息公开与内容规范'],['所跑领域知识','财经、政法、科技等条线的专业纵深'],['社会与历史语境','把单一事件放回结构里理解']],
+  subjects:[['语文 / 表达',5,'写作与采访是全部工作的基本动作'],['政治 / 思政',5,'理解政策语境与内容边界'],['历史 / 人文',4,'为报道提供纵深与判断力'],['英语',4,'外媒、涉外报道与资料查证'],['地理',3,'理解区域与社会空间差异']],
+  majors:['新闻学','传播学','汉语言文学','广播电视学','法学'],
+  outlook:'传统媒体编制收缩，但调查报道、垂直领域深度内容、机构新媒体与国际传播仍有稳定价值。',
+  income:{entry:[6,13],growth:[13,25],mature:[25,45],top:70,note:'媒体类型差异大，机构新媒体与商业内容岗薪酬弹性高于传统采编'},
+  radar:[80,84,92,80,84,86]},
+
+ {name:'翻译',aliases:['口译','笔译','同声传译','本地化','译员'],group:'public',
+  def:'在两种语言与文化之间准确转述信息，使对方能据此正确理解与行动。',
+  desc:'笔译重精度与术语一致，口译重即时反应与抗压，同传则是强度天花板。机器翻译已大幅压低通用文本价格，专业领域（法律、医学、专利、游戏本地化）成为主要价值区。',
+  daily:['理解原文语境、查证术语与背景资料','完成初译、自校与术语统一','按客户风格指南修订并交付','口译场景需做会前准备与现场即时转述'],
+  skills:[['双语转换精度',5,'准确优先于文采，漏译与增译都是错误'],['术语与领域知识',5,'不懂领域就译不对专业文本'],['资料检索与工具',4,'CAT 工具、语料库与平行文本'],['口译记忆与抗压',4,'同传与交传对即时处理要求极高']],
+  knowledge:[['语言学与第二语言文化','语义、语用与文化隐含'],['至少一个专业领域','法律、医学、金融、工程或游戏等'],['翻译理论与质量标准','直译意译取舍与质量评估体系'],['版权与保密规范','译稿权属与客户信息保密']],
+  subjects:[['英语 / 外语',5,'目标语言能力是绝对核心，越早沉浸越好'],['语文 / 表达',5,'母语功底决定译文上限，常被低估'],['历史 / 人文',4,'文化语境与典故的理解'],['政治 / 思政',3,'时政与国际关系文本常见'],['计算机 / 信息技术',3,'CAT 工具、本地化流程与术语库']],
+  majors:['翻译','英语','商务英语','小语种（法 / 德 / 日 / 西 / 阿等）','汉语国际教育'],
+  outlook:'通用笔译价格被机器翻译持续压低；高端口译、专业领域笔译、本地化工程与语言资产管理方向仍有壁垒。',
+  income:{entry:[6,13],growth:[13,28],mature:[28,55],top:100,note:'按字数 / 按天计酬常见，同传与稀缺语种单价显著更高'},
+  radar:[88,84,84,66,84,88],threshold:'本科及以上，CATTI 等资格与领域背景是重要凭证'},
+
+ {name:'厨师',aliases:['中餐厨师','西餐厨师','主厨','烘焙师','面点师','行政总厨'],group:'service',
+  def:'以食材、火候与调味的稳定控制，持续产出符合标准的菜品。',
+  desc:'从学徒到主厨靠的是可重复的手上功夫与出品稳定性，而非偶尔的高光。高峰期强度、高温环境与长期站立，是入行前需要真实评估的现实条件。',
+  daily:['验收原料、备料与初加工','按标准卡控制火候、调味与出餐速度','维护卫生、库存与成本记录','研发新菜、带教徒弟与排班协调'],
+  skills:[['刀工与火候',5,'基础功靠大量重复形成肌肉记忆'],['出品稳定性',5,'同一道菜第 200 次也要和第 1 次一样'],['成本与损耗控制',4,'毛利往往在备料环节就被决定'],['厨房协同',4,'出餐节奏依赖整条线的配合']],
+  knowledge:[['食材与调味原理','物性、产地、季节与风味搭配'],['营养与食品安全','温度控制、过敏原与卫生规范'],['厨房设备与工艺','炉具、烤箱、冷链与出品动线'],['餐饮经营基础','定价、人效与菜品结构']],
+  subjects:[['化学',4,'美拉德反应、发酵与调味的基础原理'],['体育 / 生理',4,'体力、耐热与长时间站立的身体基础'],['数学',3,'配比、成本与出成率计算'],['语文 / 表达',3,'与团队、前厅及顾客沟通'],['生物',3,'食材特性与营养常识']],
+  majors:['烹饪工艺与营养','中西面点工艺','餐饮管理','食品科学与工程'],
+  outlook:'就业容量大、入行快、可创业；连锁标准化提升效率，研发、品控与门店经营是主要上升通道。',
+  income:{entry:[5,10],growth:[10,20],mature:[20,45],top:90,note:'包食宿常见；主厨、行政总厨与自营门店收入显著高于基层岗位'},
+  radar:[90,68,78,72,90,74]},
+
+ {name:'飞行员',aliases:['机长','民航飞行员','副驾驶','飞行学员','空军飞行员'],group:'service',
+  def:'按严格程序操纵航空器，安全完成乘客或货物的运输任务。',
+  desc:'准入门槛极高：体检、养成训练、执照与机型资质逐级获取，且需要终身定期复训与考核。高收入对应的是高投入、高责任与不规律作息。',
+  daily:['飞行前准备：天气、航路、燃油与性能计算','执行检查单、与管制和机组协同完成飞行','监控仪表与状态，按程序处置异常','飞行后讲评、记录与持续复训考核'],
+  skills:[['标准程序与检查单执行',5,'不跳过任何一步是安全的前提'],['仪表飞行与情景意识',5,'在复杂天气与信息密集下保持全局判断'],['决策与应急处置',5,'异常发生时先控制飞机再处理问题'],['机组资源协同',5,'驾驶舱是典型的团队决策场景']],
+  knowledge:[['飞行原理与气象学','升力、性能、天气系统与航路规划'],['航电与飞机系统','各系统原理、限制与失效处置'],['航空法规与空管规则','空域、放行标准与运行规范'],['人为因素与生理','疲劳、时差、缺氧与决策偏差']],
+  subjects:[['物理',5,'飞行原理、力学与气象的基础'],['数学',5,'航迹、燃油与性能计算要求快速准确'],['英语',5,'无线电通话与手册全英文，有专门 ICAO 要求'],['体育 / 生理',5,'体检标准严格，体能与前庭功能需长期保持'],['地理',3,'航路、时区与地形气象常识']],
+  path:{hs:'物理、数学、英语与体能四项同时抓，提前了解招飞体检标准（视力、前庭功能等）',uni:'飞行技术专业（多为航司委培 / 养成生）或交通运输（民航方向）；也可走大改驾 / 自费学飞路径',adv:'私照 → 商照 → 仪表 / 多发 → 高性能 → 机型改装，逐级考核；ICAO 英语等级为硬要求',life:'终身复训与定期体检，经历时间积累后逐级晋升；部分人后期转教员、检查员或运行管理'},
+  majors:['飞行技术','交通运输（民航）','航空航天类'],
+  outlook:'培养周期长、投入高、淘汰率不低；航空运输恢复与机队扩张带来稳定需求，但受行业周期与航司经营状况影响。',
+  income:{entry:[15,30],growth:[30,60],mature:[60,120],top:180,note:'养成阶段需自付或委培高额训练成本；机长与副驾、货运与客运差异显著'},
+  threshold:'严格体检 + 飞行养成训练 + 商用执照与机型资质，通常需 3–5 年',
+  stages:[['养成与执照期','0–4 年','理论、模拟机、本场训练与执照考核','取得商照并完成机型改装'],['副驾驶期','4–12 年','积累飞行经历时间，逐级升级资质','晋升资深副驾 / 建立机长资格'],['机长期','12–25 年','承担全机最终决策责任，参与带飞','成为责任机长、教员或检查员'],['资深 / 转岗期','25 年以上','飞行标准、训练管理或转向运行管理','教员、检查员、运行标准或管理岗']],
+  radar:[94,88,90,58,96,90],span:'约 30–35 年，受体检与执照有效期约束，通常有明确退休年龄'}
+];
+
+/* =====================================================================
+   三、分析引擎
+   ===================================================================== */
+const DIMS = [
+ ['职业是什么','定义 · 日常工作内容','#3B82F6'],
+ ['专业技能','可操作的硬技能清单','#F97316'],
+ ['专业知识','支撑判断的知识体系','#8B5CF6'],
+ ['个人素养','性格 · 态度 · 特质','#EC4899'],
+ ['所属行业','行业 · 产业链 · 前景','#14B8A6'],
+ ['生涯周期','阶段 · 年限 · 里程碑','#E9A23B'],
+ ['收入水平','分阶段参考区间','#E8593F'],
+ ['学业投入','学科权重与升学路径','#22A06B']
+];
+const RADAR_LABELS = ['专业硬技能','理论知识','沟通协作','创新创造','抗压韧性','持续学习'];
+const HOT = ['软件工程师','临床医生','中小学教师','律师','建筑师','数据分析师','人工智能工程师','产品经理','动画师','护士','金融分析师','飞行员'];
+
+/* 合并：职业档案未写出的字段继承职业族 */
+function resolve(j){
+  const g = GROUPS[j.group] || GROUPS.general;
+  const out = Object.assign({}, g, j);
+  out.industry = j.industry || g.industry;
+  out.chain   = j.chain   || g.chain;
+  out.color   = g.color;
+  out.groupName = g.name;
+  out.base    = g.base;
+  return out;
+}
+/* 推断：按职业族特征生成一份结构化分析 */
+function infer(query,g){
+  const n = query.trim();
+  const t = s => s.replace(/\{job\}/g,n);
+  return resolve({
+    name:n, aliases:[], group:(g&&g.key||'general'), inferred:true,
+    def:'「'+n+'」可归入「'+(g?g.name:GROUPS.general.name)+'」，'+(g?g.base:GROUPS.general.base),
+    desc:t((g?g.base:GROUPS.general.base)+' 本条目由职业族特征模型推断生成：先识别「{job}」所属的职业族，再套用该族在技能、知识、素养、学科与生涯阶段上的共性结构。它适合用来建立分析框架，不替代对具体岗位招聘信息与从业者的核实。'),
+    daily:['围绕岗位核心目标，完成当日的专业产出','与协作方对齐需求、进度与标准','处理异常、反馈与必要的记录归档','复盘结果并安排下一轮改进'],
+    skills:(g?g.skills:GROUPS.general.skills).map(x=>[t(x[0]),x[1],t(x[2])]),
+    knowledge:(g?g.knowledge:GROUPS.general.knowledge).map(x=>[t(x[0]),t(x[1])]),
+    qualities:(g?g.qualities:GROUPS.general.qualities).map(x=>[t(x[0]),x[1],t(x[2])]),
+    subjects:(g?g.subjects:GROUPS.general.subjects).map(x=>[t(x[0]),x[1],t(x[2])]),
+    path:(g?g.path:GROUPS.general.path),
+    majors:(g?g.majors:GROUPS.general.majors),
+    outlook:(g?g.outlook:GROUPS.general.outlook),
+    income:(g?g.income:GROUPS.general.income),
+    stages:(g?g.stages:GROUPS.general.stages),
+    radar:(g?g.radar:GROUPS.general.radar),
+    threshold:(g?g.threshold:GROUPS.general.threshold),
+    span:(g?g.span:GROUPS.general.span)
+  });
+}
+function groupKeyOf(q){
+  const s = q.toLowerCase().replace(/\s/g,'');
+  const keys = Object.keys(GROUPS).filter(k=>k!=='general');
+  for(const k of keys){
+    if(GROUPS[k].keywords.some(w=>s.includes(w))) return k;
+  }
+  return 'general';
+}
+function analyze(query){
+  const q = (query||'').trim();
+  if(!q) return null;
+  const lower = q.toLowerCase();
+  // 1) 精确 / 别名匹配
+  let hit = CAREERS.find(c=>c.name.toLowerCase()===lower || c.aliases.some(a=>a.toLowerCase()===lower));
+  // 2) 包含匹配（输入更长的描述时）；仅用中文别名，避免 ai / pm / hr 等短英文别名误命中
+  if(!hit) hit = CAREERS.find(c=>
+    c.aliases.some(a=>/^[\u4e00-\u9fa5]{2,}$/.test(a) && lower.includes(a)) ||
+    lower.includes(c.name.toLowerCase()));
+  if(hit){
+    return {type:'exact', data:resolve(hit), similar:similarTo(q,hit,3)};
+  }
+  // 3) 职业族推断
+  const k = groupKeyOf(q), g = Object.assign({key:k},GROUPS[k]);
+  return {type:'inferred', data:infer(q,k==='general'?null:g), groupName:g.name, similar:similarTo(q,null,4)};
+}
+function similarTo(q,exclude,n){
+  const chars = new Set(q.replace(/[^\u4e00-\u9fa5a-z0-9]/gi,'').split(''));
+  return CAREERS.filter(c=>c!==exclude).map(c=>{
+    let s=0;
+    const text=c.name+c.aliases.join('');
+    for(const ch of new Set(text.split(''))) if(chars.has(ch)) s++;
+    if(text.includes(q)) s+=8;
+    return {c,s};
+  }).sort((a,b)=>b.s-a.s).slice(0,n).map(x=>x.c.name).filter((v,i,a)=>a.indexOf(v)===i);
+}
+
+/* =====================================================================
+   四、可视化组件
+   ===================================================================== */
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function radarSVG(vals,color){
+  const N=6,cx=190,cy=158,R=104,L=128;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/N;return [cx+Math.cos(a)*r,cy+Math.sin(a)*r];};
+  let s='';
+  for(let lv=1;lv<=4;lv++){
+    const p=Array.from({length:N},(_,i)=>pt(i,R*lv/4).map(v=>v.toFixed(1)).join(',')).join(' ');
+    s+=`<polygon points="${p}" fill="${lv%2?'#F7FAFF':'#FFFFFF'}" stroke="#E5ECF6" stroke-width="1"/>`;
+  }
+  for(let i=0;i<N;i++){
+    const [x,y]=pt(i,R);
+    s+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#E5ECF6" stroke-width="1"/>`;
+    const [lx,ly]=pt(i,L);
+    const anchor = lx<cx-12?'end':(lx>cx+12?'start':'middle');
+    s+=`<text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="${anchor}" font-size="11" fill="#7A89A6">${RADAR_LABELS[i]}</text>`;
+  }
+  const dp=vals.map((v,i)=>pt(i,R*Math.max(0,Math.min(100,v))/100).map(v=>v.toFixed(1)).join(',')).join(' ');
+  s+=`<polygon points="${dp}" fill="${color}22" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  vals.forEach((v,i)=>{const [x,y]=pt(i,R*v/100);
+    s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="#fff" stroke="${color}" stroke-width="2"/>`;});
+  return `<svg viewBox="0 0 380 314" width="100%" role="img" aria-label="能力画像雷达图">${s}</svg>`;
+}
+function incomeSVG(inc){
+  const W=620,H=250,pL=52,pR=18,pT=22,pB=44;
+  const pw=W-pL-pR, ph=H-pT-pB;
+  const max=Math.max(100,Math.ceil((inc.top*1.18)/20)*20);
+  const y=v=>pT+ph*(1-v/max);
+  const names=['入门期','成长期','成熟期'];
+  const arr=[inc.entry,inc.growth,inc.mature];
+  let s='';
+  for(let i=0;i<=4;i++){
+    const v=max*i/4, yy=y(v);
+    s+=`<line x1="${pL}" y1="${yy.toFixed(1)}" x2="${W-pR}" y2="${yy.toFixed(1)}" stroke="#EDF1F8" stroke-width="1"/>`;
+    s+=`<text x="${pL-10}" y="${(yy+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#9AA8BF">${v}</text>`;
+  }
+  s+=`<text x="${pL-10}" y="${pT-8}" text-anchor="end" font-size="10.5" fill="#9AA8BF">万元/年</text>`;
+  arr.forEach((a,i)=>{
+    const cxp=pL+pw*(i+0.5)/3, bw=76;
+    const yTop=y(a[1]), yBot=y(a[0]);
+    const h=Math.max(8,yBot-yTop);
+    s+=`<rect x="${(cxp-bw/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="9" fill="url(#g${i})"/>`;
+    s+=`<text x="${cxp.toFixed(1)}" y="${(yTop-9).toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#33436A">${a[0]}–${a[1]} 万</text>`;
+    s+=`<text x="${cxp.toFixed(1)}" y="${H-16}" text-anchor="middle" font-size="12.5" fill="#6B7A99">${names[i]}</text>`;
+  });
+  const ty=y(Math.min(inc.top,max));
+  s+=`<line x1="${pL}" y1="${ty.toFixed(1)}" x2="${W-pR}" y2="${ty.toFixed(1)}" stroke="#E8593F" stroke-width="1.4" stroke-dasharray="6 5"/>`;
+  s+=`<text x="${W-pR-4}" y="${(ty-7).toFixed(1)}" text-anchor="end" font-size="11.5" font-weight="700" fill="#E8593F">顶尖 / 专家层 ${inc.top} 万+</text>`;
+  const defs=`<defs>
+    <linearGradient id="g0" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93B8FF"/><stop offset="1" stop-color="#C9DDFF"/></linearGradient>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5FC8AE"/><stop offset="1" stop-color="#B4EBDD"/></linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F5A85B"/><stop offset="1" stop-color="#FFD7A8"/></linearGradient>
+  </defs>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="分阶段收入区间图">${defs}${s}</svg>`;
+}
+function levelDots(n,color){
+  return `<span class="lvl" style="color:${color}">`+[1,2,3,4,5].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')+`</span>`;
+}
+
+/* =====================================================================
+   五、报告渲染
+   ===================================================================== */
+let CURRENT=null, COMPARE=[];
+function secHead(i,title,en,lead,color){
+  return `<div class="sech"><span class="num" style="background:${color}">${i}</span><h3>${title}</h3><span class="en">${en}</span></div><p class="lead">${lead}</p>`;
+}
+function render(res){
+  const d=res.data, c=d.color;
+  const nav = DIMS.map((x,i)=>`<a href="#s${i+1}">${i+1} ${x[0]}</a>`).join('');
+  const daily = (d.daily||[]).map((t,i)=>`<div><b>${i+1}</b><span>${esc(t)}</span></div>`).join('');
+  const skills = d.skills.map(x=>`<div class="item"><div class="t"><i class="dot" style="background:${c}"></i>${esc(x[0])}${levelDots(x[1],c)}</div><div class="d">${esc(x[2])}</div></div>`).join('');
+  const know = d.knowledge.map(x=>`<div class="item"><div class="t"><i class="dot" style="background:var(--purple)"></i>${esc(x[0])}</div><div class="d">${esc(x[1])}</div></div>`).join('');
+  const qual = d.qualities.map(x=>`<div class="item"><div class="t"><i class="dot" style="background:var(--pink)"></i>${esc(x[0])}${levelDots(x[1],'#EC4899')}</div><div class="d">${esc(x[2])}</div></div>`).join('');
+  const subj = d.subjects.map(x=>`<div class="srow"><div class="sname">${esc(x[0])}</div>
+     <div class="sbar"><i style="width:${x[1]*20}%"></i></div><div class="sval">${x[1]*20}%</div>
+     <div class="sreason">${esc(x[2])}</div></div>`).join('');
+  const stages = d.stages.map((x,i)=>`<div class="tstep"><div class="bead">${i+1}</div>
+     <div class="yr">${esc(x[1])}</div><div class="st">${esc(x[0])}</div>
+     <div class="fo"><b>阶段重心：</b>${esc(x[2])}</div>
+     <div class="ms">里程碑 · ${esc(x[3])}</div></div>`).join('');
+  const majors = (d.majors||[]).map(m=>`<span>${esc(m)}</span>`).join('');
+  const sims = (res.similar||[]).map(n=>`<button data-go="${esc(n)}">${esc(n)}</button>`).join('');
+  const inferBox = res.type==='inferred' ? `<div class="infer"><b>模型推断结果</b> · 「${esc(d.name)}」尚未收录进精确职业库，已按「<b>${esc(res.groupName)}</b>」的共性特征生成分析框架。技能、知识与学科权重为该族典型结构，收入与周期为参考带，<b>请结合招聘信息与从业者访谈做二次校准</b>。
+     <div class="similar"><span style="font-size:12.5px">已收录的相近职业：</span>${sims||'<span style="font-size:12.5px">暂无</span>'}</div></div>` : '';
+  const simExact = res.type==='exact' ? `<div style="margin-top:14px" class="similar"><span style="font-size:12.5px;color:var(--muted)">延伸探索：</span>${sims}</div>` : '';
+
+  return `
+  <div class="report" id="report">
+   <div class="toolbar">
+     <button class="tb" data-act="back">← 重新分析</button>
+     <button class="tb" data-act="copy">复制报告文字</button>
+     <button class="tb" data-act="print">打印 / 存为 PDF</button>
+     <button class="tb ${COMPARE.some(x=>x.name===d.name)?'active':''}" data-act="compare">${COMPARE.some(x=>x.name===d.name)?'已加入对比':'加入对比'}</button>
+     <span class="tbsp"></span><span class="hint">${res.type==='inferred'?'推断模式':'精确档案'} · ${esc(d.groupName)}</span>
+   </div>
+   ${COMPARE.length?compareHTML():''}
+   ${inferBox}
+   <div class="rhead" id="top">
+     <div>
+       <div class="tagrow"><span class="tag hi">${esc(d.industry)}</span><span class="tag">${esc(d.groupName)}</span>
+         ${res.type==='inferred'?'<span class="tag warn">模型推断</span>':'<span class="tag">精确档案</span>'}</div>
+       <h2>${esc(d.name)}</h2>
+       <p class="rdef">${esc(d.def)}</p>
+       <p class="rdesc">${esc(d.desc)}</p>
+     </div>
+     <div class="radar"><div class="cap">能力画像 · 六维相对强度</div>${radarSVG(d.radar,c)}</div>
+   </div>
+   <div class="statrow">
+     <div class="stat"><small>所属行业</small><b>${esc(d.industry)}</b></div>
+     <div class="stat"><small>产业链位置</small><b>${esc(d.chain)}</b></div>
+     <div class="stat"><small>入行门槛</small><b>${esc(d.threshold)}</b></div>
+     <div class="stat"><small>典型职业周期</small><b>${esc(d.span)}</b></div>
+   </div>
+   <div class="nav">${nav}</div>
+
+   <section class="sec" id="s1">${secHead(1,'职业是什么','WHAT IT IS','一句话定义之外，更值得看的是每天实际在做什么。',DIMS[0][2])}
+     <p style="font-size:14.5px;margin:0 0 12px">${esc(d.desc)}</p>
+     <div class="daily">${daily}</div>${simExact}
+   </section>
+
+   <section class="sec" id="s2">${secHead(2,'需要的专业技能','HARD SKILLS','可以靠刻意练习获得、能被直接观察与考核的操作能力。圆点表示重要度（5 为最高）。',DIMS[1][2])}
+     <div class="two items">${skills}</div>
+   </section>
+
+   <section class="sec" id="s3">${secHead(3,'需要的专业知识','KNOWLEDGE','支撑你做出正确判断的概念体系与理论，通常通过系统课程与阅读获得。',DIMS[2][2])}
+     <div class="two items">${know}</div>
+   </section>
+
+   <section class="sec" id="s4">${secHead(4,'需要的个人素养','QUALITIES','更难短期训练、却往往决定长期上限的性格、态度与心理特质。同一职业族的素养要求高度相似，本维度采用职业族共性结构。',DIMS[3][2])}
+     <div class="two items">${qual}</div>
+   </section>
+
+   <section class="sec" id="s5">${secHead(5,'是什么行业','INDUSTRY','把职业放回产业链，才知道它的价值从哪来、受什么周期影响。',DIMS[4][2])}
+     <div class="two items">
+       <div class="item"><div class="t"><i class="dot" style="background:var(--teal)"></i>行业归属</div><div class="d">${esc(d.industry)}</div></div>
+       <div class="item"><div class="t"><i class="dot" style="background:var(--teal)"></i>产业链位置</div><div class="d">${esc(d.chain)}</div></div>
+     </div>
+     <div class="item" style="margin-top:10px;border-color:#CDEDE4;background:#F5FCFA">
+       <div class="t"><i class="dot" style="background:var(--teal)"></i>行业前景与结构变化</div>
+       <div class="d">${esc(d.outlook)}</div></div>
+     <div class="spannote" style="background:#F2FAFB;border-color:#D6EDEA;color:#2E6E6B">职业族特征：${esc(d.base)}</div>
+   </section>
+
+   <section class="sec" id="s6">${secHead(6,'职业生涯周期','CAREER LIFECYCLE','从入行到资深的典型阶段划分。年限是常见节奏而非硬性规定，个体差异很大。',DIMS[5][2])}
+     <div class="tl">${stages}</div>
+     <div class="spannote">完整职业周期：${esc(d.span)}。注意「职业周期」包含前期学习 / 准入门槛，医疗、科研、法律等职业的起算点明显晚于其他行业。</div>
+   </section>
+
+   <section class="sec" id="s7">${secHead(7,'收入水平','INCOME','按职业阶段给出的税前年薪参考区间（人民币）。柱体表示该阶段常见浮动带。',DIMS[6][2])}
+     <p class="inctip">单位：万元 / 年 · 仅作量级参考，不代表任何具体岗位的报价</p>
+     ${incomeSVG(d.income)}
+     <div class="incnote"><b>影响因素：</b>${esc(d.income.note)}。收入受城市、行业周期、企业性质、平台、个人能力与谈判影响显著，结构性差异往往大于年限差异；请以招聘平台同类岗位与从业者访谈交叉验证。</div>
+   </section>
+
+   <section class="sec" id="s8">${secHead(8,'对应的学业：该在哪些学科投入','STUDY INVESTMENT','这是最值得提前规划的一维。权重为模型给出的相对投入建议（5 为最高），不是分数要求。',DIMS[7][2])}
+     <div class="subj">${subj}</div>
+     <div class="path">
+       <div class="pcard"><div class="k">高中阶段 · 选科与准备</div><div class="v">${esc(d.path.hs)}</div></div>
+       <div class="pcard"><div class="k">大学阶段 · 专业与核心课</div><div class="v">${esc(d.path.uni)}</div></div>
+       <div class="pcard"><div class="k">进阶 · 资格 / 实践 / 竞赛</div><div class="v">${esc(d.path.adv)}</div></div>
+       <div class="pcard"><div class="k">长期 · 持续学习与分化</div><div class="v">${esc(d.path.life)}</div></div>
+     </div>
+     <div class="majors"><b>对口专业方向</b>${majors}</div>
+     <div class="spannote">学业投入的本质是<b>提前建立可迁移的底层能力</b>：数学与语文几乎对所有职业都有杠杆，而职业特定的一两门主科决定你能不能走进这个专业。选科前请务必核对目标院校当年招生专业对选考科目的要求。</div>
+   </section>
+  </div>`;
+}
+function compareHTML(){
+  if(!COMPARE.length) return '';
+  const rows = [
+   ['行业',...COMPARE.map(x=>x.industry)],
+   ['入行门槛',...COMPARE.map(x=>x.threshold)],
+   ['职业周期',...COMPARE.map(x=>x.span)],
+   ['入门期收入',...COMPARE.map(x=>`${x.income.entry[0]}–${x.income.entry[1]} 万`)],
+   ['成熟期收入',...COMPARE.map(x=>`${x.income.mature[0]}–${x.income.mature[1]} 万`)],
+   ['顶尖层',...COMPARE.map(x=>`${x.income.top} 万+`)],
+   ['最该投入的 3 门学科',...COMPARE.map(x=>x.subjects.slice().sort((a,b)=>b[1]-a[1]).slice(0,3).map(s=>s[0]).join(' / '))],
+   ['对口专业',...COMPARE.map(x=>x.majors.slice(0,2).join(' / '))],
+   ['能力均值',...COMPARE.map(x=>Math.round(x.radar.reduce((a,b)=>a+b,0)/6)+' / 100')],
+   ['行业前景',...COMPARE.map(x=>x.outlook)]
+  ];
+  return `<div class="cmp"><h3>职业对比 ${COMPARE.length<2?'（再加入 1 个职业即可生成对照）':''}</h3>
+   <p class="lead" style="margin:0">已选：${COMPARE.map(x=>`<b>${esc(x.name)}</b>`).join(' vs ')}　<button class="tb" data-act="clear" style="padding:3px 10px;font-size:12px">清空</button></p>
+   ${COMPARE.length===2?`<table><thead><tr><th>维度</th><th>${esc(COMPARE[0].name)}</th><th>${esc(COMPARE[1].name)}</th></tr></thead>
+   <tbody>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}</tbody></table>`:''}</div>`;
+}
+function plainText(res){
+  const d=res.data, L=[];
+  const push=(t)=>L.push(t);
+  push(`职业探索分析报告：${d.name}`);
+  push(`模式：${res.type==='inferred'?'职业族特征模型推断':'精确职业档案'}　职业族：${d.groupName}`);
+  push(`行业：${d.industry}　${d.chain}`);
+  push('');push(`【1. 职业是什么】\n${d.def}\n${d.desc}`);
+  push('典型工作：'+d.daily.map((x,i)=>`${i+1}) ${x}`).join(' '));
+  push('');push('【2. 专业技能】');d.skills.forEach(x=>push(`· ${x[0]}（重要度${x[1]}/5）：${x[2]}`));
+  push('');push('【3. 专业知识】');d.knowledge.forEach(x=>push(`· ${x[0]}：${x[1]}`));
+  push('');push('【4. 个人素养】');d.qualities.forEach(x=>push(`· ${x[0]}（重要度${x[1]}/5）：${x[2]}`));
+  push('');push(`【5. 是什么行业】\n${d.industry} · ${d.chain}\n前景：${d.outlook}`);
+  push('');push(`【6. 职业生涯周期】${d.span}`);
+  d.stages.forEach((x,i)=>push(`${i+1}) ${x[0]}（${x[1]}）：${x[2]}；里程碑：${x[3]}`));
+  push('');push(`【7. 收入水平】（税前年薪，万元，参考区间）`);
+  push(`入门期 ${d.income.entry.join('–')}｜成长期 ${d.income.growth.join('–')}｜成熟期 ${d.income.mature.join('–')}｜顶尖层 ${d.income.top} 万+`);
+  push(`说明：${d.income.note}`);
+  push('');push('【8. 学业投入与学科建议】');
+  d.subjects.forEach(x=>push(`· ${x[0]}（权重 ${x[1]}/5）：${x[2]}`));
+  push(`高中：${d.path.hs}`);push(`大学：${d.path.uni}`);
+  push(`进阶：${d.path.adv}`);push(`长期：${d.path.life}`);
+  push(`对口专业：${d.majors.join('、')}`);
+  push('');push('注：收入与周期为参考区间，受城市、行业周期、平台与个人能力影响显著，请与招聘信息和从业者访谈交叉验证。');
+  return L.join('\n');
+}
+
+/* =====================================================================
+   六、交互
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+function show(q){
+  const res=analyze(q); if(!res) return;
+  CURRENT=res;
+  $('#out').innerHTML=render(res);
+  $('#intro').style.display='none';
+  $('#suggest').classList.remove('on');
+  $('#q').value=q;
+  setTimeout(()=>{const r=$('#report'); if(r) r.scrollIntoView({behavior:'smooth',block:'start'});},120);
+}
+function suggestions(v){
+  const q=v.trim().toLowerCase();
+  const box=$('#suggest');
+  if(!q){box.classList.remove('on');return;}
+  const list=CAREERS.filter(c=>c.name.toLowerCase().includes(q)||c.aliases.some(a=>a.toLowerCase().includes(q))).slice(0,8);
+  if(!list.length){box.classList.remove('on');return;}
+  box.innerHTML=list.map(c=>`<div data-go="${esc(c.name)}"><span>${esc(c.name)}</span><small>${esc(c.industry||GROUPS[c.group].industry)}</small></div>`).join('');
+  box.classList.add('on');
+}
+function toast(msg){
+  let t=$('#toast');
+  if(!t){t=document.createElement('div');t.id='toast';
+    t.style.cssText='position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:#1F2A44;color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.2)';
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2000);
+}
+document.addEventListener('click',e=>{
+  const go=e.target.closest('[data-go]');
+  if(go){show(go.getAttribute('data-go'));return;}
+  const act=e.target.closest('[data-act]');
+  if(!act) { if(!e.target.closest('.search')) $('#suggest').classList.remove('on'); return; }
+  const a=act.getAttribute('data-act');
+  if(a==='back'){
+    $('#out').innerHTML='';$('#intro').style.display='';$('#q').value='';$('#q').focus();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  if(a==='print') window.print();
+  if(a==='copy'&&CURRENT){
+    const txt=plainText(CURRENT);
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(()=>toast('报告文字已复制')).catch(()=>fallbackCopy(txt));
+    } else fallbackCopy(txt);
+  }
+  if(a==='compare'&&CURRENT){
+    const d=CURRENT.data;
+    const i=COMPARE.findIndex(x=>x.name===d.name);
+    if(i>=0){COMPARE.splice(i,1);toast('已移出对比');}
+    else{
+      if(COMPARE.length>=2){COMPARE.shift();}
+      COMPARE.push(d);toast(COMPARE.length===2?'对比已生成':'已加入对比，再分析一个职业即可对照');
+    }
+    $('#out').innerHTML=render(CURRENT);
+  }
+  if(a==='clear'){COMPARE=[];$('#out').innerHTML=render(CURRENT);}
+});
+function fallbackCopy(txt){
+  const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('报告文字已复制');}catch(err){toast('复制失败，请使用打印功能');}
+  document.body.removeChild(ta);
+}
+$('#go').addEventListener('click',()=>show($('#q').value));
+$('#q').addEventListener('input',e=>suggestions(e.target.value));
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')show($('#q').value);});
+$('#q').addEventListener('focus',e=>suggestions(e.target.value));
+
+/* 初始化 */
+$('#dims').innerHTML=DIMS.map((x,i)=>`<div class="dim"><b style="background:${x[2]}">${i+1}</b><span>${x[0]}<small>${x[1]}</small></span></div>`).join('');
+$('#hot').innerHTML='<span>热门职业</span>'+HOT.map(n=>`<button data-go="${n}">${n}</button>`).join('');
+</script>
+</body>
+</html>
